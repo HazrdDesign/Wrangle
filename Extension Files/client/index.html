@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wrangle</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="app-container">
+        <div class="header">
+            <div class="brand">WRANGLE</div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="removeAllExpressions()" id="btn-remove-all"
+                    title="Remove All Expressions">🗑</button>
+            </div>
+        </div>
+
+        <div class="main-body">
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="nav-group" id="sidebar-nav">
+                    <!-- Categories populated by JS -->
+                </div>
+                <div class="sidebar-divider"></div>
+                <div class="nav-group">
+                    <div class="nav-item small" onclick="handleAddCategoryButton(event)" title="Add Category">
+                        <span class="nav-icon">📁</span>
+                    </div>
+                    <div class="nav-item small" onclick="handleAddButton(event)" title="Add Expression">
+                        <span class="nav-icon">+</span>
+                    </div>
+                </div>
+                <div class="sidebar-footer">
+                    <button class="sidebar-footer-btn" onclick="openSettings()" title="Settings">⚙</button>
+                    <button class="sidebar-footer-btn" onclick="showHelp()" title="Help">💡</button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content-area">
+                <div class="content-header" id="content-header">
+                    <span id="cat-title">MOTION LIBRARY</span>
+                    <span id="item-count" class="count-badge">6 ITEMS</span>
+                </div>
+                <div class="expression-list" id="content">
+                    <!-- Expressions populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog -->
+    <div class="dialog-overlay" id="dialog">
+        <div class="dialog">
+            <div class="dialog-header">
+                <div class="dialog-title">Add Expression</div>
+                <button class="close-btn" onclick="closeDialog()">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="inp-name" class="form-control" placeholder="Expression Name">
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="inp-cat" class="form-control">
+                    <!-- Categories populated by JS -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Color</label>
+                <input type="color" id="inp-color" class="form-control" value="#2997ff">
+            </div>
+
+            <div class="form-group">
+                <label>Controllers <span id="ctrl-status"
+                        style="margin-left: 5px; font-weight: bold; color: #6e7681;">None</span></label>
+            </div>
+
+            <div class="form-group">
+                <label>Expression</label>
+                <textarea id="inp-code" class="form-control" placeholder="wiggle(5, 50);"></textarea>
+            </div>
+
+            <div class="dialog-footer">
+                <button class="btn btn-save" onclick="saveExpression()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="dialog-overlay" id="settings-modal">
+        <div class="dialog">
+            <div class="dialog-header">
+                <div class="dialog-title">Settings</div>
+                <button class="close-btn" onclick="closeSettings()">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label>Panel Hue</label>
+                <div class="slider-container">
+                    <input type="range" id="set-hue" min="0" max="360" value="220">
+                    <span class="slider-val" id="val-hue">220</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Font Size</label>
+                <div class="slider-container">
+                    <input type="range" id="set-font" min="10" max="18" value="13">
+                    <span class="slider-val" id="val-font">13px</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="dialog-overlay" id="help-modal">
+        <div class="dialog">
+            <div class="dialog-header">
+                <div class="dialog-title">Click Instructions</div>
+                <button class="close-btn" onclick="closeHelp()">✕</button>
+            </div>
+
+            <div class="help-content">
+                <div class="help-item">
+                    <div class="help-label">Click</div>
+                    <div class="help-desc">Apply expression + controllers</div>
+                </div>
+                <div class="help-item">
+                    <div class="help-label">Ctrl + Click</div>
+                    <div class="help-desc">Apply expression only (no controllers)</div>
+                </div>
+                <div class="help-item">
+                    <div class="help-label">Alt + Click</div>
+                    <div class="help-desc">Apply controllers only (no expression)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Edit Modal -->
+    <div class="dialog-overlay" id="category-modal">
+        <div class="dialog">
+            <div class="dialog-header">
+                <div class="dialog-title">Edit Category</div>
+                <button class="close-btn" onclick="closeCategoryDialog()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Category Name</label>
+                <input type="text" id="inp-cat-name" class="form-control" placeholder="Category Name">
+            </div>
+            <div class="form-group">
+                <label>Icon (Emoji or SVG)</label>
+                <input type="text" id="inp-cat-icon" class="form-control" placeholder="e.g. 📁">
+            </div>
+            <div class="dialog-footer">
+                <button class="btn btn-save" onclick="saveCategoryName()">Save</button>
+                <button class="btn btn-delete" id="btn-del-cat" onclick="deleteCategoryBtn()">Delete Category</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/CSInterface.js"></script>
+    <script src="js/library.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
