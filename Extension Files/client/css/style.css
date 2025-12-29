@@ -75,10 +75,20 @@ body {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 16px;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 6px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.icon-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    display: block;
 }
 
 .icon-btn:hover {
@@ -115,33 +125,6 @@ body {
     margin: 8px 0;
 }
 
-.sidebar-footer {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 10px;
-    gap: 4px;
-    background: hsla(var(--hue), var(--sat), 2%, 0.5);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.sidebar-footer-btn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-muted);
-    font-size: 14px;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 4px;
-    transition: all 0.2s;
-    flex: 1;
-}
-
-.sidebar-footer-btn:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-}
 
 .nav-group {
     margin-bottom: 4px;
@@ -511,17 +494,4 @@ input[type="color"].form-control {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #3a404d;
-}
-
-.nav-item.small {
-    height: 30px;
-    min-height: 30px;
-    font-size: 14px;
-    flex-direction: row;
-    gap: 6px;
-}
-
-.nav-item.small .nav-icon {
-    font-size: 14px;
-    margin-bottom: 0;
 }
