@@ -113,9 +113,11 @@ body {
     align-items: center;
     padding-top: 20px;
     border-right: 1px solid rgba(255, 255, 255, 0.05);
-    justify-content: space-between;
-    padding-bottom: 0;
+    justify-content: flex-start;
+    padding-bottom: 20px;
     z-index: 5;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .sidebar-divider {
@@ -221,6 +223,7 @@ body {
 .expression-list {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 0 20px 20px 20px;
 }
 

@@ -181,11 +181,8 @@ const LibraryManager = {
             if (!this.data.icons) this.data.icons = {};
 
             // Ensure defaults exist (in case of partial data)
-            for (let cat in defaultLibrary) {
-                if (!this.data.categories[cat]) {
-                    this.data.categories[cat] = defaultLibrary[cat];
-                }
-            }
+            // Removed the old loop that re-added missing default categories, 
+            // as this was preventing users from permanently deleting them.
         }
     },
 
