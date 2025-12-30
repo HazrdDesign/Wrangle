@@ -1,6 +1,6 @@
 // Main Logic
 const csInterface = new CSInterface();
-let activeCat = "Motion";
+let activeCat = "Text";
 let editingId = null; // Track if we are editing an existing item
 
 // Initialize
@@ -243,14 +243,6 @@ function renderSidebar() {
     const el = document.getElementById('sidebar-nav');
     el.innerHTML = '';
 
-    const icons = {
-        "Motion": "∿",
-        "Text": "T",
-        "Loop": "↻",
-        "Color": '<svg viewBox="0 0 250 250"><circle cx="68.73" cy="68.73" r="68.73"/><circle cx="198.46" cy="153.96" r="51.54"/><circle cx="78.37" cy="211.34" r="38.66"/></svg>',
-        "Utils": "⚙",
-        "Custom": "★"
-    };
 
     const categories = LibraryManager.getCategories();
 

@@ -1,66 +1,42 @@
 // Default Expression Library
 const defaultLibrary = {
-    "Motion": [
-        { id: 1, name: "Standard Wiggle", icon: "∿", code: "var freq = effect('Frequency')('Slider');\nvar amp = effect('Amplitude')('Slider');\nwiggle(freq, amp);", color: "#2ed573" },
-        { id: 2, name: "Wiggle + Control", icon: "🎚️", code: "freq = effect('Speed')('Slider'); amp = effect('Amount')('Slider'); wiggle(freq, amp);", color: "#2ed573", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }, { name: "Amount", matchName: "ADBE Slider Control" }] },
-        { id: 3, name: "Inertial Bounce", icon: "🏀", code: "amp = .05; freq = 2.0; decay = 2.0; n = 0; if (numKeys > 0){ n = nearestKey(time).index; if (key(n).time > time){ n--; }} if (n == 0){ t = 0; }else{ t = time - key(n).time; } if (n > 0 && t < 1){ v = velocityAtTime(key(n).time - thisComp.frameDuration/10); value + v*amp*Math.sin(freq*t*2*Math.PI)/Math.exp(decay*t); }else{ value; }", color: "#ffa502" },
-        { id: 4, name: "Separate X/Y", icon: "↔", code: "x = value[0]; y = value[1]; [x, y]" },
-        { id: 5, name: "Smooth Drift", icon: "🍃", code: "var speed = effect('Speed')('Slider');\nvalue + [time * speed, 0];", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }] },
-        { id: 101, name: "Loop Wiggle", icon: "♾️", code: "var freq = effect('Freq')('Slider');\nvar amp = effect('Amp')('Slider');\nvar loopTime = effect('Loop Time')('Slider');\nvar t = time % loopTime;\nvar w1 = wiggle(freq, amp, 1, 0.5, t);\nvar w2 = wiggle(freq, amp, 1, 0.5, t - loopTime);\nlinear(t, 0, loopTime, w1, w2);", controllers: [{ name: "Freq", matchName: "ADBE Slider Control" }, { name: "Amp", matchName: "ADBE Slider Control" }, { name: "Loop Time", matchName: "ADBE Slider Control" }] },
-        {
-            id: 103,
-            name: "Wiggle on Speed",
-            icon: "🏎️",
-            color: "#ff4757",
-            code: `// Wiggle Based on Speed with Reverse Control
-var sensitivity = effect("Sensitivity")("Slider"); // Lower = more reactive
-var maxAmount = effect("Max Amount")("Slider"); // Max intensity
-var reverse = effect("Reverse")("Checkbox"); // Check to invert logic
-
-var speedValue = 0;
-try {
-    speedValue = transform.position.speed;
-} catch(e) {
-    speedValue = 0; // Fallback if not on a layer with position
-}
-
-var amt = 0;
-if (reverse == 1) {
-    var calculated = clamp(speedValue / (sensitivity > 0 ? sensitivity : 1), 0, maxAmount);
-    amt = maxAmount - calculated;
-} else {
-    amt = clamp(speedValue / (sensitivity > 0 ? sensitivity : 1), 0, maxAmount);
-}
-
-wiggle(10, amt);`,
-            controllers: [
-                { name: "Sensitivity", matchName: "ADBE Slider Control" },
-                { name: "Max Amount", matchName: "ADBE Slider Control" },
-                { name: "Reverse", matchName: "ADBE Checkbox Control" }
-            ]
-        }
-    ],
     "Text": [
-        { id: 6, name: "Typewriter", icon: "⌨️", code: "txt=value; n=effect('Completion')('Slider'); txt.substr(0,n)", controllers: [{ name: "Completion", matchName: "ADBE Slider Control" }] },
-        { id: 7, name: "Num Counter", icon: "#", code: "effect('Value')('Slider').value.toFixed(0)", controllers: [{ name: "Value", matchName: "ADBE Slider Control" }] },
-        { id: 8, name: "Timecode", icon: "⏱", code: "timeToTimecode(t = time + timeOffset, timecodeBase = 30, isDuration = false)" },
-        { id: 9, name: "Bouncing Text", icon: "↕", code: "// Text bounce logic" },
-        { id: 102, name: "Center Anchor", icon: "🎯", code: "y=value[1]-sourceRectAtTime(time).height/2; [0,y]" }
+        { id: 101, name: "Lock Gradient Ramp to Text", code: "// Apply to Gradient Ramp's Start and End positions\nthisLayer.toComp(value);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
+        { id: 102, name: "Auto Center Anchor Point", code: "// Apply to Text Layer's Anchor Point\nr = sourceRectAtTime(time, false);\n[r.left + r.width/2, r.top + r.height/2];\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
+        { id: 103, name: "Typewriter with Cursor", code: "// Apply to Source Text\nn = Math.min(text.sourceText.length, Math.floor(time * effect(\"Speed\")(\"Slider\")));\ntext.sourceText.substr(0, n) + \"|\";\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }], color: "#2ed573" },
+        { id: 104, name: "Digital Clock", code: "// Apply to Source Text\nh = Math.floor(time / 3600);\nm = Math.floor(time / 60) % 60;\ns = Math.floor(time % 60);\n[h, m, s].map(x => x < 10 ? \"0\" + x : x).join(\":\");\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
+        { id: 105, name: "Number Counter", code: "// Apply to Source Text\nn = Math.round(value);\nn.toLocaleString();\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
+        { id: 106, name: "Glitched Text", code: "// Apply to Source Text\noriginalText = text.sourceText;\nglitchSpeed = effect(\"Speed\")(\"Slider\");\ncorruptionLevel = effect(\"Corruption\")(\"Slider\") / 100;\n\n// Full range of printable Unicode characters approximation\nunicodeStart = 33;  // \"!\"\nunicodeEnd = 126;   // \"~\"\n\nresult = \"\";\nseedRandom(Math.floor(time * glitchSpeed * 10), true);\n\nfor (i = 0; i < originalText.length; i++) {\n    char = originalText.charAt(i);\n    if (char == \" \") {\n        result += \" \";\n        continue;\n    }\n    if (random() < corruptionLevel) {\n        switch (Math.floor(random(4))) {\n            case 0: \n                // Pick random printable ASCII character\n                result += String.fromCharCode(Math.floor(random(unicodeStart, unicodeEnd+1)));\n                break;\n            case 1: \n                // Duplicate the original char for glitchy effect\n                result += char + char;\n                break;\n            case 2: \n                // Randomize case\n                result += (random() > 0.5) ? char.toUpperCase() : char.toLowerCase();\n                break;\n            case 3: \n                // Pick a random high Unicode block for “weird” symbols\n                result += String.fromCharCode(Math.floor(random(0x2500, 0x25FF))); // Box-drawing block\n                break;\n        }\n    } else {\n        result += char;\n    }\n}\nresult;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }, { name: "Corruption", matchName: "ADBE Slider Control" }], color: "#2ed573" }
     ],
-    "Loop": [
-        { id: 10, name: "Loop Cycle", icon: "↻", code: "loopOut('cycle');" },
-        { id: 11, name: "Ping Pong", icon: "⇄", code: "loopOut('pingpong');" },
-        { id: 12, name: "Offset", icon: "↝", code: "loopOut('offset');" },
-        { id: 13, name: "Continue", icon: "⇢", code: "loopOut('continue');" }
+    "Time": [
+        { id: 201, name: "Loop (Dropdown Select)", code: "// Apply to any keyframed property\nloopMap = [\"cycle\", \"pingpong\", \"offset\"];\ntype = loopMap[effect(\"Loop Type\")(\"Menu\") - 1];\nloopOut(type);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Loop Type", matchName: "ADBE Dropdown Control" }], color: "#1e90ff" },
+        { id: 203, name: "Posterize Time", code: "// Apply to any property\nposterizeTime(effect(\"Frame Rate\")(\"Slider\"));\nvalue;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frame Rate", matchName: "ADBE Slider Control" }], color: "#1e90ff" },
+        { id: 204, name: "Start / End at Time", code: "// Apply to any property\ntime > inPoint && time < outPoint ? value : valueAtTime(inPoint);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#1e90ff" },
+        { id: 205, name: "Simple Time Driver", code: "// Apply to any property\ntime * 100;\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#1e90ff" },
+        { id: 206, name: "Delay Index Value", code: "// Apply to any property (e.g. Rotation)\ndelayFrames = effect(\"Delay Frames\")(\"Slider\");\ndelayTime = delayFrames * thisComp.frameDuration * (index - 1);\nthisComp.layer(1).rotation.valueAtTime(time - delayTime);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Delay Frames", matchName: "ADBE Slider Control" }], color: "#1e90ff" }
     ],
+    "Wiggle": [
+        { id: 301, name: "Choppy Stop Motion", code: "// Apply to any property\nposterizeTime(effect(\"Frame Rate\")(\"Slider\"));\nwiggle(effect(\"Frequency\")(\"Slider\"), effect(\"Amplitude\")(\"Slider\"));\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frame Rate", matchName: "ADBE Slider Control" }, { name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ffa502" },
+        { id: 302, name: "Random Flicker Opacity", code: "// Apply to Opacity property\nposterizeTime(effect(\"Frame Rate\")(\"Slider\"));\nrandom(0, 100);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frame Rate", matchName: "ADBE Slider Control" }], color: "#ffa502" },
+        { id: 303, name: "Wiggle 1D (X Only)", code: "// Apply to 2D Position property\nx = wiggle(effect(\"Frequency\")(\"Slider\"), effect(\"Amplitude\")(\"Slider\"))[0];\n[x, value[1]];\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ffa502" },
+        { id: 304, name: "Wiggle Loop", code: "// Apply to any property\nfreq = effect(\"Frequency\")(\"Slider\");\namp = effect(\"Amplitude\")(\"Slider\");\nloopDur = effect(\"Duration\")(\"Slider\");\nw = wiggle(freq, amp, 1, 0.5, time % loopDur);\nw;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }, { name: "Duration", matchName: "ADBE Slider Control" }], color: "#ffa502" }
+    ],
+    "Transform": [
+        { id: 401, name: "Exponential Scale", code: "// Apply to Scale property\nfreq = effect(\"Frequency\")(\"Slider\");\namp = effect(\"Amplitude\")(\"Slider\");\nw = wiggle(freq, amp);\nvalue * (1 + w);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ff4757" },
+        { id: 402, name: "Random Layer Scale", code: "// Apply to Scale property\nseedRandom(index, true);\n[random(50, 150), random(50, 150)];\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ff4757" },
+        { id: 403, name: "Maintain Stroke Width", code: "// Apply to Stroke Width property\nvalue / max(length(toComp([0, 0]), toComp([0.7071, 0.7071])), 0.001);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ff4757" },
+        { id: 404, name: "Procedural Sine Path", code: "// Apply to Shape Path property\namp = effect(\"Amplitude\")(\"Slider\");\nwLen = effect(\"Wavelength\")(\"Slider\");\nlengthTotal = effect(\"Length\")(\"Slider\");\npts = [];\nfor (i = 0; i < 200; i++) {\n  t = i / 199;\n  x = t * lengthTotal - lengthTotal / 2;\n  y = amp * Math.sin(t * lengthTotal / wLen * 2 * Math.PI);\n  pts.push([x, y]);\n}\ncreatePath(pts, [], [], false);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Amplitude", matchName: "ADBE Slider Control" }, { name: "Wavelength", matchName: "ADBE Slider Control" }, { name: "Length", matchName: "ADBE Slider Control" }], color: "#ff4757" },
+        { id: 405, name: "Heartbeat Pulse", code: "// Apply to Scale property\nfreq = effect(\"Frequency\")(\"Slider\");\namp = effect(\"Amplitude\")(\"Slider\");\nvalue + Math.sin(time * freq * 2 * Math.PI) * amp;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ff4757" },
+        { id: 406, name: "Circular Orbit", code: "// Apply to Position property\nspeed = effect(\"Speed\")(\"Slider\");\nradius = effect(\"Radius\")(\"Slider\");\n\na = time * speed;\nvalue + [Math.cos(a) * radius, Math.sin(a) * radius, 0];\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }, { name: "Radius", matchName: "ADBE Slider Control" }], color: "#ff4757" }
+    ],
+    "Utility": [],
     "Color": [
-        { id: 14, name: "Rainbow Cycle", icon: "🌈", code: "var speed = effect('Speed')('Slider');\nhslToRgb([time * speed % 1, 1, 0.5, 1])", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }] },
-        { id: 15, name: "Random Flash", icon: "⚡", code: "seedRandom(index, true); random([0,0,0,1], [1,1,1,1])" }
+        { id: 601, name: "Rainbow Cycle", code: "// Apply to any color property\nspeed = effect(\"Speed\")(\"Slider\");\nh = (time * speed) % 1;\nhslToRgb([h, 1, 0.5, 1]);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }], color: "#ffffff" },
+        { id: 602, name: "Random Color Per Second", code: "// Apply to any color property\nseedRandom(Math.floor(time), true);\n[random(), random(), random()];\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ffffff" },
+        { id: 603, name: "Brightness Pulse (Same Hue)", code: "// Apply to any color property\nh = 0.6;\nl = 0.5 + Math.sin(time * 4) * 0.25;\nhslToRgb([h, 1, l]);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ffffff" }
     ],
-    "Utils": [
-        { id: 16, name: "Fit to Comp", icon: "⛶", code: "[thisComp.width, thisComp.height]" },
-        { id: 17, name: "Index Delay", icon: "📚", code: "delay = 5; d = delay*thisComp.frameDuration*(index - 1); thisComp.layer(1).rotation.valueAtTime(time - d)" },
-        { id: 18, name: "2D to 3D Null", icon: "🧊", code: "thisComp.layer('3D Layer Name').toComp([0,0,0]);" }
+    "3D": [
+        { id: 702, name: "2D to 3D Space Null", code: "// Apply to 2D Position property\nthisComp.layer(effect(\"3D Layer\")(\"Layer\")).toComp([0, 0, 0]);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "3D Layer", matchName: "ADBE Layer Control" }], color: "#a29bfe" }
     ],
     "Custom": []
 };
@@ -68,7 +44,7 @@ wiggle(10, amt);`,
 // Manager for Library Data
 const LibraryManager = {
     data: {
-        version: 2,
+        version: 11,
         categories: {},
         icons: {}
     },
@@ -83,14 +59,33 @@ const LibraryManager = {
                 const path = require('path');
                 const os = require('os');
 
-                const homeDir = os.homedir();
-                const docDir = path.join(homeDir, 'Documents', 'Wrangle');
+                // Define OS-Standard Paths
+                const isWin = process.platform === 'win32';
+                const appData = isWin ? process.env.APPDATA : path.join(os.homedir(), 'Library', 'Application Support');
+                const appDir = path.join(appData, 'Hazrd', 'Wrangle');
+                this.filePath = path.join(appDir, 'data.json');
 
-                if (!this.fs.existsSync(docDir)) {
-                    this.fs.mkdirSync(docDir, { recursive: true });
+                // Legacy Path (for migration)
+                const oldDocDir = path.join(os.homedir(), 'Documents', 'Wrangle');
+                const oldFilePath = path.join(oldDocDir, 'data.json');
+
+                // Migration Logic: Check if old file exists but new one doesn't
+                if (!this.fs.existsSync(this.filePath) && this.fs.existsSync(oldFilePath)) {
+                    try {
+                        if (!this.fs.existsSync(appDir)) {
+                            this.fs.mkdirSync(appDir, { recursive: true });
+                        }
+                        this.fs.copyFileSync(oldFilePath, this.filePath);
+                        console.log("Successfully migrated data to OS-standard path.");
+                    } catch (migrationErr) {
+                        console.error("Migration failed:", migrationErr);
+                    }
                 }
 
-                this.filePath = path.join(docDir, 'data.json');
+                // Ensure the new directory exists
+                if (!this.fs.existsSync(appDir)) {
+                    this.fs.mkdirSync(appDir, { recursive: true });
+                }
             }
         } catch (e) {
             console.error("Node.js initialization failed:", e);
@@ -122,68 +117,49 @@ const LibraryManager = {
 
         // Initialize with defaults if nothing loaded
         if (!loadedData) {
-            this.data.categories = JSON.parse(JSON.stringify(defaultLibrary));
-            // Extract default icons
-            for (let cat in defaultLibrary) {
-                // Default icons mapping based on initial hardcoded values
-                const icons = {
-                    "Motion": "∿",
-                    "Text": "T",
-                    "Loop": "↻",
-                    "Color": '<svg viewBox="0 0 250 250"><circle cx="68.73" cy="68.73" r="68.73"/><circle cx="198.46" cy="153.96" r="51.54"/><circle cx="78.37" cy="211.34" r="38.66"/></svg>',
-                    "Utils": "⚙",
-                    "Custom": "★"
-                };
-                if (icons[cat]) this.data.icons[cat] = icons[cat];
-            }
-            this.save();
+            this.resetToDefaults();
             return;
         }
 
         // MIGRATION LOGIC
-        if (!loadedData.version) {
-            // Version 1 (Old format: just categories object)
-            console.log("Migrating data to Version 2...");
-            this.data.categories = loadedData; // The whole object was categories
+        if (loadedData.version < 11) {
+            console.log("Migrating data to Version 11...");
 
-            // Restore default icons for existing categories
-            const defaultIcons = {
-                "Motion": "∿",
-                "Text": "T",
-                "Loop": "↻",
-                "Color": '<svg viewBox="0 0 250 250"><circle cx="68.73" cy="68.73" r="68.73"/><circle cx="198.46" cy="153.96" r="51.54"/><circle cx="78.37" cy="211.34" r="38.66"/></svg>',
-                "Utils": "⚙",
-                "Custom": "★"
-            };
+            // Preserve Custom expressions if they exist
+            const customItems = (loadedData.categories && loadedData.categories["Custom"]) || [];
 
-            for (let cat in this.data.categories) {
-                if (defaultIcons[cat]) {
-                    this.data.icons[cat] = defaultIcons[cat];
-                } else {
-                    this.data.icons[cat] = "●"; // Default for unknown
-                }
-            }
+            // Re-initialize with new defaults
+            this.resetToDefaults();
 
-            // Merge defaults for missing categories
-            for (let cat in defaultLibrary) {
-                if (!this.data.categories[cat]) {
-                    this.data.categories[cat] = defaultLibrary[cat];
-                    if (defaultIcons[cat]) this.data.icons[cat] = defaultIcons[cat];
-                }
-            }
+            // Restore custom items
+            this.data.categories["Custom"] = customItems;
 
-            this.save(); // Save migrated data
+            this.save();
         } else {
-            // Already Version 2 or newer
+            // Already Version 11 or newer
             this.data = loadedData;
 
             if (!this.data.categories) this.data.categories = {};
             if (!this.data.icons) this.data.icons = {};
-
-            // Ensure defaults exist (in case of partial data)
-            // Removed the old loop that re-added missing default categories, 
-            // as this was preventing users from permanently deleting them.
         }
+    },
+
+    resetToDefaults() {
+        this.data.version = 11;
+        this.data.categories = JSON.parse(JSON.stringify(defaultLibrary));
+
+        // Populate standard icons
+        this.data.icons = {
+            "Text": "🔤",
+            "Time": "🕒",
+            "Wiggle": "🪼",
+            "Transform": "🪄",
+            "Utility": "🛠️",
+            "Color": "🌈",
+            "3D": "🧊",
+            "Custom": "★"
+        };
+        this.save();
     },
 
     save() {

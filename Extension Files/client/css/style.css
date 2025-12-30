@@ -56,10 +56,19 @@ body {
 }
 
 .brand {
-    font-weight: 800;
-    letter-spacing: 1px;
-    font-size: 14px;
-    color: #fff;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+#wrangle-logo {
+    height: 24px;
+    width: auto;
+}
+
+#wrangle-logo path {
+    fill: #ff5500;
+    /* Matching the original SVG fill class */
 }
 
 .brand span {
