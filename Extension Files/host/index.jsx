@@ -1,6 +1,10 @@
+// Wrangle — ExtendScript host
+// Uses matchNames ("ADBE Effect Parade") instead of display names so the
+// panel keeps working on localized (non-English) installs of After Effects.
+
 function applyExpression(code, controllers) {
     var result = "success";
-    app.beginUndoGroup("Apply Expression");
+    app.beginUndoGroup("Wrangle: Apply Expression");
     try {
         var comp = app.project.activeItem;
         if (!comp || !(comp instanceof CompItem)) {
@@ -14,57 +18,62 @@ function applyExpression(code, controllers) {
 
         var appliedCount = 0;
         var controllersAdded = 0;
+        var expressionTargets = 0;
 
         for (var i = 0; i < selectedLayers.length; i++) {
             var layer = selectedLayers[i];
-            var selectedProps = layer.selectedProperties;
 
-            // 1. Controller Check & Creation
+            // 1. Create any missing controller effects (with default values)
             if (controllers && controllers.length > 0) {
-                var effectGroup = layer.property("Effects");
-                if (!effectGroup) {
-                    // Try to add Effects group if it doesn't exist (rare but possible on some layer types)
-                    // Usually it exists, but we check.
-                }
-
+                var effectGroup = layer.property("ADBE Effect Parade");
                 if (effectGroup) {
                     for (var c = 0; c < controllers.length; c++) {
                         var ctrl = controllers[c];
-                        // Check if effect with this name exists
                         if (!effectGroup.property(ctrl.name)) {
                             var newEff = effectGroup.addProperty(ctrl.matchName);
                             newEff.name = ctrl.name;
                             controllersAdded++;
+
+                            if (ctrl.value !== undefined && ctrl.value !== null) {
+                                try {
+                                    newEff.property(1).setValue(ctrl.value);
+                                } catch (valErr) {
+                                    // Control type doesn't take this value — leave default
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            // 2. Apply expression code to selected properties (only if code is provided)
+            // 2. Apply the expression to this layer's selected properties
             if (code && code !== "") {
-                if (selectedProps.length > 0) {
-                    for (var j = 0; j < selectedProps.length; j++) {
-                        var prop = selectedProps[j];
-                        if (prop.canSetExpression) {
-                            try {
-                                prop.expression = code;
-                                appliedCount++;
-                            } catch (e) {
-                                // Ignore errors
-                            }
+                var selectedProps = layer.selectedProperties;
+                for (var j = 0; j < selectedProps.length; j++) {
+                    var prop = selectedProps[j];
+                    if (prop.propertyType === PropertyType.PROPERTY && prop.canSetExpression) {
+                        expressionTargets++;
+                        try {
+                            prop.expression = code;
+                            appliedCount++;
+                        } catch (exprErr) {
+                            // Property rejected the expression; counted below
                         }
-                    }
-                } else {
-                    if (i === 0 && controllersAdded === 0) {
-                        throw new Error("Please select a property (like Position, Scale, Opacity, etc.) to apply the expression.");
                     }
                 }
             }
         }
 
-        // Success if we applied code OR added controllers
-        if (appliedCount === 0 && controllersAdded === 0 && selectedLayers.length > 0) {
-            throw new Error("Could not apply expression. Make sure you have selected a property that accepts expressions.");
+        // Only complain after checking EVERY selected layer — a layer without
+        // selected properties must not block one that has them.
+        if (code && code !== "" && appliedCount === 0) {
+            if (controllersAdded > 0) {
+                throw new Error("Controllers were added, but no property was selected for the expression.\nSelect a property (Position, Scale, Opacity...) and click again.");
+            }
+            if (expressionTargets === 0) {
+                throw new Error("Please select a property (like Position, Scale, or Opacity) to apply the expression.");
+            }
+            throw new Error("The selected property doesn't accept this expression.");
         }
 
     } catch (err) {
@@ -75,6 +84,25 @@ function applyExpression(code, controllers) {
     }
 
     return result;
+}
+
+// Returns the expression on the first selected property that has one.
+// (Used by Ctrl+Click on the panel's + button.)
+function getSelectedExpression() {
+    var comp = app.project.activeItem;
+    if (!comp || !(comp instanceof CompItem)) return "";
+
+    var selectedLayers = comp.selectedLayers;
+    for (var i = 0; i < selectedLayers.length; i++) {
+        var props = selectedLayers[i].selectedProperties;
+        for (var j = 0; j < props.length; j++) {
+            var prop = props[j];
+            if (prop.propertyType === PropertyType.PROPERTY && prop.canSetExpression && prop.expression !== "") {
+                return prop.expression;
+            }
+        }
+    }
+    return "";
 }
 
 function captureExpressionAndControllers() {
@@ -88,55 +116,53 @@ function captureExpressionAndControllers() {
     var code = "";
     var controllers = [];
 
-    // 1. Get Expression from selected property
+    // 1. Expression from the first selected property that has one
     var props = layer.selectedProperties;
     for (var j = 0; j < props.length; j++) {
-        if (props[j].canSetExpression && props[j].expression !== "") {
-            code = props[j].expression;
-            break; // Only capture first selected expression
+        var prop = props[j];
+        if (prop.propertyType === PropertyType.PROPERTY && prop.canSetExpression && prop.expression !== "") {
+            code = prop.expression;
+            break;
         }
     }
 
-    // 2. Scan for selected Effects to use as controllers
-    var effectGroup = layer.property("Effects");
+    // Capture the control's current value where that makes sense, so a
+    // saved setup comes back tuned the way it was left.
+    function captureValue(effect) {
+        try {
+            var mn = effect.matchName;
+            if (mn === "ADBE Slider Control" || mn === "ADBE Angle Control" || mn === "ADBE Checkbox Control") {
+                return effect.property(1).value;
+            }
+        } catch (e) { }
+        return undefined;
+    }
+
+    function pushController(effect) {
+        for (var k = 0; k < controllers.length; k++) {
+            if (controllers[k].name === effect.name) return; // de-dupe
+        }
+        var entry = { name: effect.name, matchName: effect.matchName };
+        var val = captureValue(effect);
+        if (val !== undefined) entry.value = val;
+        controllers.push(entry);
+    }
+
+    // 2. Controllers: explicitly selected effects...
+    var effectGroup = layer.property("ADBE Effect Parade");
     if (effectGroup) {
-        // A. Check for explicitly selected effects (Manual override)
         for (var i = 1; i <= effectGroup.numProperties; i++) {
             var effect = effectGroup.property(i);
-            if (effect.selected) {
-                controllers.push({
-                    name: effect.name,
-                    matchName: effect.matchName
-                });
-            }
+            if (effect.selected) pushController(effect);
         }
 
-        // B. Auto-detect effects used in the expression
+        // ...plus effects referenced by the expression: effect("Name")
         if (code !== "") {
-            // Regex to find effect("Name") or effect('Name')
-            // Matches: effect ( "Name" ) or effect('Name') with optional whitespace
             var effectRegex = /effect\s*\(\s*["']([^"']+)["']\s*\)/g;
             var match;
             while ((match = effectRegex.exec(code)) !== null) {
-                var effectName = match[1];
-                // Check if this effect exists on the layer
-                var targetEffect = effectGroup.property(effectName);
-                if (targetEffect) {
-                    // Check if already added to avoid duplicates
-                    var exists = false;
-                    for (var k = 0; k < controllers.length; k++) {
-                        if (controllers[k].name === targetEffect.name) {
-                            exists = true;
-                            break;
-                        }
-                    }
-                    if (!exists) {
-                        controllers.push({
-                            name: targetEffect.name,
-                            matchName: targetEffect.matchName
-                        });
-                    }
-                }
+                var target = effectGroup.property(match[1]);
+                if (target) pushController(target);
             }
         }
     }
@@ -148,27 +174,30 @@ function captureExpressionAndControllers() {
 }
 
 function removeAllExpressions() {
-    app.beginUndoGroup("Remove All Expressions");
-    var comp = app.project.activeItem;
-    if (!comp || !(comp instanceof CompItem)) return;
+    app.beginUndoGroup("Wrangle: Remove All Expressions");
+    try {
+        var comp = app.project.activeItem;
+        if (!comp || !(comp instanceof CompItem)) return;
 
-    var selectedLayers = comp.selectedLayers;
+        var selectedLayers = comp.selectedLayers;
 
-    function recursiveRemove(propGroup) {
-        for (var i = 1; i <= propGroup.numProperties; i++) {
-            var prop = propGroup.property(i);
-            if (prop.propertyType === PropertyType.PROPERTY && prop.canSetExpression) {
-                if (prop.expression !== "") {
-                    prop.expression = "";
+        function recursiveRemove(propGroup) {
+            for (var i = 1; i <= propGroup.numProperties; i++) {
+                var prop = propGroup.property(i);
+                if (prop.propertyType === PropertyType.PROPERTY && prop.canSetExpression) {
+                    if (prop.expression !== "") {
+                        prop.expression = "";
+                    }
+                } else if (prop.propertyType === PropertyType.NAMED_GROUP || prop.propertyType === PropertyType.INDEXED_GROUP) {
+                    recursiveRemove(prop);
                 }
-            } else if (prop.propertyType === PropertyType.NAMED_GROUP || prop.propertyType === PropertyType.INDEXED_GROUP) {
-                recursiveRemove(prop);
             }
         }
-    }
 
-    for (var i = 0; i < selectedLayers.length; i++) {
-        recursiveRemove(selectedLayers[i]);
+        for (var i = 0; i < selectedLayers.length; i++) {
+            recursiveRemove(selectedLayers[i]);
+        }
+    } finally {
+        app.endUndoGroup();
     }
-    app.endUndoGroup();
 }

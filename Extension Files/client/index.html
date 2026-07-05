@@ -10,126 +10,154 @@
 
 <body>
 
-    <!-- Header -->
-    <div class="app-container">
-        <div class="header">
-            <div class="brand">
-                <svg id="wrangle-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512.03 193.66">
-                    <g>
-                        <path
-                            d="M504.39,129.31c-13.09,15.49-32.57,18.72-35.88,5.04,13.82,3.12,34.49-4.16,34.49-22.15,0-9.51-6.84-18.28-18.73-18.28-18.38,0-30.94,15.37-33.22,32.56-5.21,8.23-10.42,13.37-14.05,13.37-7.73,0,13.77-54.34,26.06-82.32l-27.11,3.69c-6.67,33.94-13.46,70.3-36.71,83.84,4.06-17.42,9.48-34.04,16.65-49.65h-17.54l-1.78,5.2c-10.46-14.15-41.68-5.76-43.62,25.5-12.3,19.56-16.73,13.04-16.73,11.36,0-5.35,11.89-19.92,11.59-31.36-.41-15.71-21.37-16.99-31.36.89l4.01-11.59h-18.94s-7.35,44.59-24,44.44c-5.2-.05-4.39-12.41,11.89-44.44h-19.04l-2.08,5.94c-8.1-14.57-37.19-7.69-43.48,24.9-11.75,18.71-16.72,13.59-16.72,10.78,0-5.95,8.62-26.16,14.42-38.35-6.25,0-20.37-.6-27.21-2.38.6-2.08,2.81-6.39,2.81-6.39h-18.59c-.59,19.47-10.07,46.4-27.61,55.67l15.76,12.07c8.03-10.7,16.63-28.65,23.17-46.64,2.98.9,6.1,1.34,9.07,1.49-5.94,12.49-9.96,20.66-9.96,29.43,0,12.37,15.84,24.25,35.24,2.02,4.74,16.36,23.52,16.05,32.25,2.44,2.85,15.05,19.46,9.75,26.5,4.06l-1.53,4.42h19.36c.22-13.53,13.49-45.19,24.04-45.19,9.45,0-7.88,20.75-7.88,33.29s19.13,22.41,38.57-2.92c7.81,10.61,22.47,7.52,27.88.99l-3.87,11.15c-24.82.3-44.15,9.07-44.15,25.87,0,9.81,8.48,15.6,20.07,15.6,27.68,0,37.31-32.4,37.31-32.4,9.69-3.51,17.46-9.15,23.85-16.06.84,7.65,5.19,11.15,13.31,11.15s15.46-6.09,21.83-13.75c8.16,17.04,40.26,18,59.3.95l-7.64-14.24ZM482.93,105.34c5.93-.94,7.41,4.33,6.72,7.46-1.46,6.69-12.67,11.3-20.84,11,1.93-8.92,7.66-17.43,14.12-18.46ZM247.63,140c-3.87,0-5.5-3.12-5.5-7.28,0-9.96,5.94-23.34,14.56-23.34,3.13,0,5.65,1.49,7.88,3.72-5.8,18.58-11.59,26.9-16.94,26.9ZM358.07,179.69c-3.57,0-5.06-1.49-5.06-3.86,0-6.55,11.3-11.3,23.49-11.75-4.46,9.37-11.3,15.61-18.43,15.61ZM377.24,133.01c-4.31,0-6.98-2.97-6.98-7.58,0-7.13,3.42-16.79,13.08-16.79,3.42,0,7.43,2.08,8.92,3.71-3.42,9.52-7.29,20.66-15.02,20.66Z" />
-                        <path
-                            d="M146.64,70.32c-.32,26.17-6.53,63.72-37.07,65.8,11.95-17.22,10.95-50.2-13.03-56.13-42.93-5.77-42.99,44.3-12,62.24C24.64,171.45-17.82,77.35,63.88,20.04L46.11,0c-95.05,74.66-25.9,202.27,52.38,148.69,43.28,12.22,65.25-37.98,74.27-71.67l-26.12-6.7ZM76.43,113.05c-5.38-14.04,8.42-26.65,21.43-18.63,10.32,9.61,6.63,28.47-2.09,38.3-8.46-4.02-15.89-11.3-19.34-19.67Z" />
-                    </g>
-                </svg>
-            </div>
-            <div class="header-actions">
-                <button class="icon-btn" onclick="handleAddButton(event)" title="Add Expression">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                    </svg>
-                </button>
-                <button class="icon-btn" onclick="handleAddCategoryButton(event)" title="Add Category">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" />
-                    </svg>
-                </button>
-                <button class="icon-btn" onclick="removeAllExpressions()" id="btn-remove-all"
-                    title="Remove All Expressions">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
-                    </svg>
-                </button>
-                <button class="icon-btn" onclick="openSettings()" title="Settings">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-                    </svg>
-                </button>
-                <button class="icon-btn" onclick="showHelp()" title="Help">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.88 12.15 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.88 3.15-2.15 4.1z" />
-                    </svg>
-                </button>
-            </div>
-        </div>
+    <!-- Icon set: curated monochrome symbols (stroke-based, 20x20) -->
+    <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+        <symbol id="ic-text" viewBox="0 0 20 20"><path d="M4 5h12M10 5v11" /></symbol>
+        <symbol id="ic-time" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5" /><path d="M10 6.5V10l2.6 1.8" /></symbol>
+        <symbol id="ic-wave" viewBox="0 0 20 20"><path d="M2.5 10c1.9-5.4 3.8-5.4 5.7 0s3.6 5.4 5.5 0 2.1-4 3.8-1.5" /></symbol>
+        <symbol id="ic-transform" viewBox="0 0 20 20"><rect x="5" y="5" width="10" height="10" rx="1.5" /><path d="M2.5 2.5L7 7M13 13l4.5 4.5M17.5 15v2.5H15" /></symbol>
+        <symbol id="ic-sliders" viewBox="0 0 20 20"><path d="M3 6.5h14M3 13.5h14" /><circle cx="8" cy="6.5" r="2" /><circle cx="12" cy="13.5" r="2" /></symbol>
+        <symbol id="ic-palette" viewBox="0 0 20 20"><circle cx="7" cy="7.5" r="3.2" /><circle cx="13" cy="7.5" r="3.2" /><circle cx="10" cy="12.5" r="3.2" /></symbol>
+        <symbol id="ic-cube" viewBox="0 0 20 20"><path d="M10 2.8l6.2 3.6v7.2L10 17.2l-6.2-3.6V6.4z" /><path d="M10 10l6.2-3.6M10 10L3.8 6.4M10 10v7.2" /></symbol>
+        <symbol id="ic-star" viewBox="0 0 20 20"><path d="M10 3l2.1 4.5 5 .6-3.7 3.4 1 4.9-4.4-2.5-4.4 2.5 1-4.9L2.9 8.1l5-.6z" /></symbol>
+        <symbol id="ic-loop" viewBox="0 0 20 20"><path d="M4 10a6 6 0 0 1 10.2-4.2M16 10a6 6 0 0 1-10.2 4.2M14.5 2.5v3.4h-3.4M5.5 17.5v-3.4h3.4" /></symbol>
+        <symbol id="ic-bolt" viewBox="0 0 20 20"><path d="M11 2L4.5 11H9l-1 7L15.5 9H11z" /></symbol>
+        <symbol id="ic-eye" viewBox="0 0 20 20"><path d="M2.5 10s3-5.5 7.5-5.5S17.5 10 17.5 10s-3 5.5-7.5 5.5S2.5 10 2.5 10z" /><circle cx="10" cy="10" r="2.4" /></symbol>
+        <symbol id="ic-camera" viewBox="0 0 20 20"><rect x="2.5" y="6" width="11" height="9" rx="1.5" /><path d="M13.5 9.5l4-2.5v7l-4-2.5" /></symbol>
+        <symbol id="ic-grid" viewBox="0 0 20 20"><path d="M3.5 3.5h13v13h-13zM10 3.5v13M3.5 10h13" /></symbol>
+        <symbol id="ic-heart" viewBox="0 0 20 20"><path d="M10 16.5S3.5 12.6 3.5 8.3C3.5 6 5.3 4.5 7.2 4.5c1.2 0 2.2.6 2.8 1.6.6-1 1.6-1.6 2.8-1.6 1.9 0 3.7 1.5 3.7 3.8 0 4.3-6.5 8.2-6.5 8.2z" /></symbol>
+        <symbol id="ic-pin" viewBox="0 0 20 20"><path d="M10 17.5s-5.5-5-5.5-9a5.5 5.5 0 0 1 11 0c0 4-5.5 9-5.5 9z" /><circle cx="10" cy="8.5" r="2" /></symbol>
+        <symbol id="ic-folder" viewBox="0 0 20 20"><path d="M2.5 5.5h5l2 2h8v9h-15z" /></symbol>
+        <!-- UI glyphs -->
+        <symbol id="ic-search" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5" /><path d="M12.8 12.8L17 17" /></symbol>
+        <symbol id="ic-plus" viewBox="0 0 20 20"><path d="M10 4v12M4 10h12" /></symbol>
+        <symbol id="ic-newfolder" viewBox="0 0 20 20"><path d="M2.5 5h5l2 2h8v8.5h-15z" /><path d="M13 9.5v4M11 11.5h4" /></symbol>
+        <symbol id="ic-x" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></symbol>
+        <symbol id="ic-more" viewBox="0 0 20 20"><circle cx="4" cy="10" r="1.6" fill="currentColor" stroke="none" /><circle cx="10" cy="10" r="1.6" fill="currentColor" stroke="none" /><circle cx="16" cy="10" r="1.6" fill="currentColor" stroke="none" /></symbol>
+        <symbol id="ic-pencil" viewBox="0 0 20 20"><path d="M13.7 3.2l3.1 3.1-9.9 9.9-4.1 1 1-4.1z" fill="currentColor" stroke="none" /></symbol>
+    </svg>
 
-        <div class="main-body">
+    <div class="app">
 
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="nav-group" id="sidebar-nav">
-                    <!-- Categories populated by JS -->
-                </div>
+        <!-- Header: logo, search, actions -->
+        <header class="topbar">
+            <svg id="wrangle-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512.03 193.66">
+                <g>
+                    <path
+                        d="M504.39,129.31c-13.09,15.49-32.57,18.72-35.88,5.04,13.82,3.12,34.49-4.16,34.49-22.15,0-9.51-6.84-18.28-18.73-18.28-18.38,0-30.94,15.37-33.22,32.56-5.21,8.23-10.42,13.37-14.05,13.37-7.73,0,13.77-54.34,26.06-82.32l-27.11,3.69c-6.67,33.94-13.46,70.3-36.71,83.84,4.06-17.42,9.48-34.04,16.65-49.65h-17.54l-1.78,5.2c-10.46-14.15-41.68-5.76-43.62,25.5-12.3,19.56-16.73,13.04-16.73,11.36,0-5.35,11.89-19.92,11.59-31.36-.41-15.71-21.37-16.99-31.36.89l4.01-11.59h-18.94s-7.35,44.59-24,44.44c-5.2-.05-4.39-12.41,11.89-44.44h-19.04l-2.08,5.94c-8.1-14.57-37.19-7.69-43.48,24.9-11.75,18.71-16.72,13.59-16.72,10.78,0-5.95,8.62-26.16,14.42-38.35-6.25,0-20.37-.6-27.21-2.38.6-2.08,2.81-6.39,2.81-6.39h-18.59c-.59,19.47-10.07,46.4-27.61,55.67l15.76,12.07c8.03-10.7,16.63-28.65,23.17-46.64,2.98.9,6.1,1.34,9.07,1.49-5.94,12.49-9.96,20.66-9.96,29.43,0,12.37,15.84,24.25,35.24,2.02,4.74,16.36,23.52,16.05,32.25,2.44,2.85,15.05,19.46,9.75,26.5,4.06l-1.53,4.42h19.36c.22-13.53,13.49-45.19,24.04-45.19,9.45,0-7.88,20.75-7.88,33.29s19.13,22.41,38.57-2.92c7.81,10.61,22.47,7.52,27.88.99l-3.87,11.15c-24.82.3-44.15,9.07-44.15,25.87,0,9.81,8.48,15.6,20.07,15.6,27.68,0,37.31-32.4,37.31-32.4,9.69-3.51,17.46-9.15,23.85-16.06.84,7.65,5.19,11.15,13.31,11.15s15.46-6.09,21.83-13.75c8.16,17.04,40.26,18,59.3.95l-7.64-14.24ZM482.93,105.34c5.93-.94,7.41,4.33,6.72,7.46-1.46,6.69-12.67,11.3-20.84,11,1.93-8.92,7.66-17.43,14.12-18.46ZM247.63,140c-3.87,0-5.5-3.12-5.5-7.28,0-9.96,5.94-23.34,14.56-23.34,3.13,0,5.65,1.49,7.88,3.72-5.8,18.58-11.59,26.9-16.94,26.9ZM358.07,179.69c-3.57,0-5.06-1.49-5.06-3.86,0-6.55,11.3-11.3,23.49-11.75-4.46,9.37-11.3,15.61-18.43,15.61ZM377.24,133.01c-4.31,0-6.98-2.97-6.98-7.58,0-7.13,3.42-16.79,13.08-16.79,3.42,0,7.43,2.08,8.92,3.71-3.42,9.52-7.29,20.66-15.02,20.66Z" />
+                    <path
+                        d="M146.64,70.32c-.32,26.17-6.53,63.72-37.07,65.8,11.95-17.22,10.95-50.2-13.03-56.13-42.93-5.77-42.99,44.3-12,62.24C24.64,171.45-17.82,77.35,63.88,20.04L46.11,0c-95.05,74.66-25.9,202.27,52.38,148.69,43.28,12.22,65.25-37.98,74.27-71.67l-26.12-6.7ZM76.43,113.05c-5.38-14.04,8.42-26.65,21.43-18.63,10.32,9.61,6.63,28.47-2.09,38.3-8.46-4.02-15.89-11.3-19.34-19.67Z" />
+                </g>
+            </svg>
+
+            <div class="search-wrap">
+                <svg class="ic"><use href="#ic-search" xlink:href="#ic-search" /></svg>
+                <input type="text" id="search" placeholder="Search expressions…" spellcheck="false">
+                <button id="search-clear" title="Clear search">
+                    <svg class="ic"><use href="#ic-x" xlink:href="#ic-x" /></svg>
+                </button>
             </div>
 
-            <!-- Content -->
-            <div class="content-area">
-                <div class="content-header" id="content-header">
-                    <span id="cat-title">MOTION LIBRARY</span>
-                    <span id="item-count" class="count-badge">6 ITEMS</span>
-                </div>
-                <div class="expression-list" id="content">
-                    <!-- Expressions populated by JS -->
+            <div class="topbar-actions">
+                <button class="icon-btn" id="btn-add" title="Save expression from selection (Ctrl+Click: expression only)">
+                    <svg class="ic"><use href="#ic-plus" xlink:href="#ic-plus" /></svg>
+                </button>
+                <button class="icon-btn" id="btn-add-cat" title="New category">
+                    <svg class="ic"><use href="#ic-newfolder" xlink:href="#ic-newfolder" /></svg>
+                </button>
+                <div class="menu-wrap">
+                    <button class="icon-btn" id="btn-more" title="More">
+                        <svg class="ic ic-fill"><use href="#ic-more" xlink:href="#ic-more" /></svg>
+                    </button>
+                    <div class="menu" id="more-menu">
+                        <button class="menu-item" id="menu-settings">Settings…</button>
+                        <div class="menu-sep"></div>
+                        <button class="menu-item danger" id="menu-remove-all">Remove Expressions from Selection…</button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
+
+        <!-- Category tabs -->
+        <nav class="tabbar">
+            <div class="tabs-scroll" id="tabs"></div>
+            <button id="btn-edit-cat" title="Edit current category (or right-click any tab)">
+                <svg class="ic ic-fill"><use href="#ic-pencil" xlink:href="#ic-pencil" /></svg>
+            </button>
+        </nav>
+
+        <!-- Expression list -->
+        <main class="list" id="content"></main>
+
+        <!-- Modifier legend -->
+        <footer class="hintbar">
+            <span><b id="hint-click">Click</b> apply + controls</span>
+            <span><b id="hint-ctrl">Ctrl</b> expression only</span>
+            <span><b id="hint-alt">Alt</b> controls only</span>
+        </footer>
     </div>
 
-    <!-- Dialog -->
+    <!-- Add / Edit Expression -->
     <div class="dialog-overlay" id="dialog">
         <div class="dialog">
             <div class="dialog-header">
-                <div class="dialog-title">Add Expression</div>
-                <button class="close-btn" onclick="closeDialog()">✕</button>
+                <div class="dialog-title" id="dlg-expr-title">Add Expression</div>
+                <button class="close-btn" id="btn-close-expr" title="Close">
+                    <svg class="ic"><use href="#ic-x" xlink:href="#ic-x" /></svg>
+                </button>
             </div>
 
             <div class="form-group">
                 <label>Name</label>
-                <input type="text" id="inp-name" class="form-control" placeholder="Expression Name">
+                <input type="text" id="inp-name" class="form-control" placeholder="Expression name" spellcheck="false">
             </div>
 
             <div class="form-group">
                 <label>Category</label>
-                <select id="inp-cat" class="form-control">
-                    <!-- Categories populated by JS -->
-                </select>
+                <select id="inp-cat" class="form-control"></select>
             </div>
 
             <div class="form-group">
                 <label>Color</label>
-                <input type="color" id="inp-color" class="form-control" value="#2997ff">
+                <input type="color" id="inp-color" class="form-control" value="#4ba3e3">
             </div>
 
             <div class="form-group">
-                <label>Controllers <span id="ctrl-status"
-                        style="margin-left: 5px; font-weight: bold; color: #6e7681;">None</span></label>
+                <label>Controllers</label>
+                <div class="chips" id="ctrl-chips"></div>
             </div>
 
             <div class="form-group">
                 <label>Expression</label>
-                <textarea id="inp-code" class="form-control" placeholder="wiggle(5, 50);"></textarea>
+                <textarea id="inp-code" class="form-control" placeholder="wiggle(5, 50);" spellcheck="false"></textarea>
             </div>
 
             <div class="dialog-footer">
-                <button class="btn btn-save" onclick="saveExpression()">Save</button>
+                <button class="btn btn-save" id="btn-save-expr">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- Settings -->
     <div class="dialog-overlay" id="settings-modal">
         <div class="dialog">
             <div class="dialog-header">
                 <div class="dialog-title">Settings</div>
-                <button class="close-btn" onclick="closeSettings()">✕</button>
+                <button class="close-btn" id="btn-close-settings" title="Close">
+                    <svg class="ic"><use href="#ic-x" xlink:href="#ic-x" /></svg>
+                </button>
             </div>
 
             <div class="form-group">
-                <label>Panel Hue</label>
+                <label>Theme</label>
+                <div class="check-row">
+                    <input type="checkbox" id="set-match" checked>
+                    <span>Match After Effects</span>
+                </div>
+            </div>
+
+            <div class="form-group" id="hue-group">
+                <label>Custom Hue</label>
                 <div class="slider-container">
                     <input type="range" id="set-hue" min="0" max="360" value="220">
                     <span class="slider-val" id="val-hue">220</span>
@@ -146,49 +174,26 @@
         </div>
     </div>
 
-    <!-- Help Modal -->
-    <div class="dialog-overlay" id="help-modal">
-        <div class="dialog">
-            <div class="dialog-header">
-                <div class="dialog-title">Click Instructions</div>
-                <button class="close-btn" onclick="closeHelp()">✕</button>
-            </div>
-
-            <div class="help-content">
-                <div class="help-item">
-                    <div class="help-label">Click</div>
-                    <div class="help-desc">Apply expression + controllers</div>
-                </div>
-                <div class="help-item">
-                    <div class="help-label">Ctrl + Click</div>
-                    <div class="help-desc">Apply expression only (no controllers)</div>
-                </div>
-                <div class="help-item">
-                    <div class="help-label">Alt + Click</div>
-                    <div class="help-desc">Apply controllers only (no expression)</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Category Edit Modal -->
+    <!-- New / Edit Category -->
     <div class="dialog-overlay" id="category-modal">
         <div class="dialog">
             <div class="dialog-header">
-                <div class="dialog-title">Edit Category</div>
-                <button class="close-btn" onclick="closeCategoryDialog()">✕</button>
+                <div class="dialog-title" id="dlg-cat-title">New Category</div>
+                <button class="close-btn" id="btn-close-cat" title="Close">
+                    <svg class="ic"><use href="#ic-x" xlink:href="#ic-x" /></svg>
+                </button>
             </div>
             <div class="form-group">
                 <label>Category Name</label>
-                <input type="text" id="inp-cat-name" class="form-control" placeholder="Category Name">
+                <input type="text" id="inp-cat-name" class="form-control" placeholder="Category name" spellcheck="false">
             </div>
             <div class="form-group">
-                <label>Icon (Emoji or SVG)</label>
-                <input type="text" id="inp-cat-icon" class="form-control" placeholder="e.g. 📁">
+                <label>Icon</label>
+                <div class="icon-grid" id="icon-grid"></div>
             </div>
             <div class="dialog-footer">
-                <button class="btn btn-save" onclick="saveCategoryName()">Save</button>
-                <button class="btn btn-delete" id="btn-del-cat" onclick="deleteCategoryBtn()">Delete Category</button>
+                <button class="btn btn-save" id="btn-save-cat">Save</button>
+                <button class="btn btn-delete" id="btn-del-cat">Delete Category</button>
             </div>
         </div>
     </div>
