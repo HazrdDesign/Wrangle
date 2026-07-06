@@ -1,0 +1,43 @@
+name: Release
+
+# Creates a GitHub Release with the signed ZXP attached.
+# Run it from the Actions tab (or API) after sign.bat has produced a fresh
+# Builds/Wrangle.zxp and the version bump is committed. Bump the tag input
+# for each new version; edit .github/RELEASE_NOTES.md before running (falls
+# back to auto-generated notes if that file is missing).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.1.0)"
+        required: true
+        default: "v1.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release with signed ZXP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag }}
+        run: |
+          test -f "Builds/Wrangle.zxp" || { echo "Builds/Wrangle.zxp not found"; exit 1; }
+          cp "Builds/Wrangle.zxp" "Wrangle-${TAG}.zxp"
+
+          if [ -f .github/RELEASE_NOTES.md ]; then
+            NOTES=(--notes-file .github/RELEASE_NOTES.md)
+          else
+            NOTES=(--generate-notes)
+          fi
+
+          gh release create "$TAG" "Wrangle-${TAG}.zxp" \
+            --target "${{ github.sha }}" \
+            --title "Wrangle $TAG" \
+            "${NOTES[@]}"
