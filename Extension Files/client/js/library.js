@@ -12,7 +12,7 @@ const defaultLibrary = {
             id: 1,
             name: "Spin (time × 30)",
             code: "// Apply to Rotation — 30° per second\ntime * 30;",
-            color: "#4ba3e3"
+            color: "#ff8a4d"
         },
         {
             id: 2,

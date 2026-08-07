@@ -1,30 +1,26 @@
-## Wrangle 1.1.0
+## Wrangle 1.2.0 — "Ember"
 
-Complete UI overhaul plus a long list of fixes. Download `Wrangle-v1.1.0.zxp` below and install with ZXPInstaller (or the PluginPlay Browser).
+A visual pass. No layout changes, no feature removals — same panel, with an identity. Download `Wrangle-v1.2.0.zxp` below and install with ZXPInstaller (or the PluginPlay Browser).
 
-### New
+### Look
 
-- **Search** across the whole library, grouped by category — plus an **All** view
-- **Category tabs** replace the sidebar rail; the list gets the full panel width
-- **Controller badges**: rows show how many controls an expression bundles; hover for where to apply it
-- **Match After Effects theme** — the panel follows AE's Brightness setting (custom hue still available in Settings)
-- **Curated monochrome icon picker** for categories (replaces typed emoji/SVG)
-- Always-visible Click / Ctrl / Alt legend (⌘ / ⌥ on macOS)
-- Captured controllers keep their **current values**, and bundled sliders arrive with sensible defaults
+- **Brand orange is the accent.** `#ff5500`, straight from the logo, replaces the generic UI blue — active tab, focus rings, primary button, and the apply animation.
+- **Film grain** across the whole panel, generated inline (no image files), so surfaces stop looking machine-flat.
+- **Warm neutrals.** The greys are pulled a few degrees toward the accent at identical brightness, so the panel still matches After Effects exactly while no longer reading as default grey.
+- **Three typographic voices** — Archivo Narrow caps for labels and tabs, IBM Plex Mono for counts, keys and code, system sans for expression names. Both webfonts ship with the extension (SIL OFL, 27 KB total).
+- **Stitched hairlines** between rows instead of solid rules.
+- **Depth**: recessed search and text fields, hairline highlights on raised chrome, a heat line along the top of every dialog, and a glow on the category color bar you're hovering.
+- **Empty categories** carry the Wrangle lasso mark, ghosted.
 
-### Changed
+### Feel
 
-- Default library trimmed to six battle-tested Essentials (spin, wiggle, loop, posterize time, auto-center anchor, typewriter). Anything you saved yourself is preserved on upgrade — only the old bundled items are replaced.
+- **The apply sweep.** Applying an expression now fires a 480 ms band of heat across the row — clear confirmation that After Effects took the click, replacing the old grey flash.
+
+### New setting
+
+- **Accent** color picker in Settings, defaulting to Wrangle orange, for anyone who wants a different heat.
 
 ### Fixed
 
-- Editing an expression no longer moves it to the end of its list
-- Renaming a category over an existing name no longer corrupts icons
-- Names with quotes or angle brackets no longer break the UI
-- Text fields are selectable/editable again (CSS reset bug)
-- CEP 9 (AE 2019/2020) styling issues (flex gap / backdrop-filter)
-- Ctrl+Click capture called a host function that didn't exist
-- Multi-layer apply no longer fails when the first layer has no selected property
-- Works on localized (non-English) AE installs
-- Destructive "Remove All" now confirms first; Esc/overlay-click close dialogs
-- Panel enforces a minimum size instead of collapsing
+- Warm tinting no longer shifts panel brightness, so "Match After Effects" stays pixel-accurate against native panels.
+- A failed or unavailable `evalScript` call can no longer swallow the panel's own visual feedback.

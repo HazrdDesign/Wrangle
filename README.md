@@ -37,8 +37,9 @@ Hover any row to see where the expression is meant to be applied and which contr
 ### 3. Customization
 Open **⋯ → Settings** to adjust the panel:
 
-- **Match After Effects** (default): the panel samples AE's skin color and follows your Brightness preference.
-- **Custom Hue**: turn matching off to tint the panel with your own hue, like before.
+- **Match After Effects** (default): the panel samples AE's skin color and follows your Brightness preference. Neutrals are warmed slightly toward the accent without changing brightness, so it still matches native panels exactly.
+- **Custom Hue**: turn matching off to tint the panel chassis with your own hue.
+- **Accent**: Wrangle orange by default — drives the active tab, focus rings, primary button, and the apply sweep.
 - **Font Size**: scales the entire UI, rows included.
 
 ---

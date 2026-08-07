@@ -1,26 +1,56 @@
 /* ============================================================
-   Wrangle — compact AE-native theme
-   Tokens are set at runtime from AE's appSkinInfo (or the
-   custom hue setting). The :root values below are only the
-   pre-JS fallback so the panel never paints unstyled.
-   NOTE: no flex `gap` and no `backdrop-filter` anywhere —
-   both are unsupported in CEP 9 (AE 2019/2020, Chromium 61).
+   Wrangle — "Ember"
+   AE-native chassis, brand heat (#ff5500), film grain, stitched
+   rules. Chassis tokens are set at runtime from AE's appSkinInfo
+   (or the custom hue setting); the :root values below are only
+   the pre-JS fallback so the panel never paints unstyled.
+   NOTE: no flex `gap` and no `backdrop-filter` anywhere — both
+   are unsupported in CEP 9 (AE 2019/2020, Chromium 61).
    ============================================================ */
 
+@font-face {
+    font-family: 'Wrangle Display';
+    src: url('../fonts/archivo-narrow-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Wrangle Mono';
+    src: url('../fonts/plex-mono-500.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
-    --bg: #262626;
-    --bg-chrome: #1c1c1c;
-    --bg-inset: #191919;
-    --bg-hover: #323232;
-    --bg-active: #3a3a3a;
-    --border: #3c3c3c;
-    --border-soft: #303030;
-    --text: #d8d8d8;
-    --text-muted: #969696;
-    --accent: #4ba3e3;
+    /* Chassis (overwritten at runtime) */
+    --bg: #211e1b;
+    --bg-chrome: #1a1715;
+    --bg-chrome-hi: #1e1a18;
+    --bg-inset: #141110;
+    --bg-hover: #2a2622;
+    --bg-active: #322d29;
+    --border: #35302c;
+    --border-soft: #100e0c;
+    --stitch: #302a26;
+    --text: #d9d3cb;
+    --text-muted: #8b8079;
+
+    /* Heat */
+    --accent: #ff5500;
     --accent-text: #ffffff;
+    --accent-glow: rgba(255, 85, 0, 0.5);
+    --accent-wash: rgba(255, 85, 0, 0.12);
+    --accent-sweep: rgba(255, 85, 0, 0.42);
+
     --danger: #e05252;
     --base-font-size: 13px;
+
+    --sans: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --disp: 'Wrangle Display', 'Arial Narrow', 'Segoe UI', sans-serif;
+    --mono: 'Wrangle Mono', Consolas, 'SF Mono', Menlo, monospace;
 }
 
 * {
@@ -30,7 +60,7 @@
 }
 
 /* Text fields must stay selectable/editable — a `*` reset
-   silently breaks them (the bug you were hitting). */
+   silently breaks them. */
 input,
 textarea,
 select {
@@ -55,9 +85,24 @@ body {
 body {
     background-color: var(--bg);
     color: var(--text);
-    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--sans);
     font-size: var(--base-font-size);
     overflow: hidden;
+}
+
+/* Film grain — the single biggest cure for flat, machine-made
+   surfaces. Inline SVG turbulence, so no image files ship. */
+.grain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 90;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 button {
@@ -87,6 +132,13 @@ button {
     stroke: none;
 }
 
+/* Small caps label voice, used for every structural label */
+.label-voice {
+    font-family: var(--disp);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
 /* ---------- Layout ---------- */
 
 .app {
@@ -103,8 +155,9 @@ button {
     display: flex;
     align-items: center;
     padding: 0 8px;
-    background-color: var(--bg-chrome);
+    background-image: linear-gradient(var(--bg-chrome-hi), var(--bg-chrome));
     border-bottom: 1px solid var(--border-soft);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
 }
 
 #wrangle-logo {
@@ -123,15 +176,17 @@ button {
     min-width: 0;
     display: flex;
     align-items: center;
-    height: 23px;
+    height: 22px;
     background: var(--bg-inset);
     border: 1px solid var(--border);
     border-radius: 3px;
     padding: 0 4px 0 7px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .search-wrap:focus-within {
     border-color: var(--accent);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--accent-wash);
 }
 
 .search-wrap .ic {
@@ -148,6 +203,7 @@ button {
     border: 0;
     outline: none;
     color: var(--text);
+    font-family: var(--sans);
     font-size: 0.85em;
     padding: 0 6px;
 }
@@ -189,6 +245,7 @@ button {
     border-radius: 3px;
     color: var(--text-muted);
     display: flex;
+    transition: color 0.12s, background-color 0.12s;
 }
 
 .icon-btn+.icon-btn,
@@ -197,8 +254,8 @@ button {
 }
 
 .icon-btn:hover {
-    color: var(--text);
-    background: var(--bg-hover);
+    color: var(--accent);
+    background: var(--accent-wash);
 }
 
 /* ---------- Overflow menu ---------- */
@@ -212,11 +269,11 @@ button {
     position: absolute;
     top: 28px;
     right: 0;
-    min-width: 200px;
-    background: var(--bg-chrome);
+    min-width: 210px;
+    background: var(--bg-chrome-hi);
     border: 1px solid var(--border);
     border-radius: 4px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
     padding: 4px;
     z-index: 60;
 }
@@ -253,11 +310,11 @@ button {
 /* ---------- Category tabs ---------- */
 
 .tabbar {
-    height: 29px;
+    height: 28px;
     flex: none;
     display: flex;
     align-items: stretch;
-    background-color: var(--bg-chrome);
+    background-image: linear-gradient(var(--bg-chrome-hi), var(--bg-chrome));
     border-bottom: 1px solid var(--border-soft);
 }
 
@@ -273,13 +330,17 @@ button {
 }
 
 .tab {
+    position: relative;
     display: flex;
     align-items: center;
     padding: 0 9px;
+    flex: none;
+    font-family: var(--disp);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     font-size: 0.85em;
     color: var(--text-muted);
-    border-bottom: 2px solid transparent;
-    flex: none;
+    transition: color 0.12s;
 }
 
 .tab:hover {
@@ -287,21 +348,32 @@ button {
 }
 
 .tab.active {
-    color: var(--text);
-    border-bottom-color: var(--accent);
+    color: #fff;
+}
+
+/* Heat bar under the active tab */
+.tab.active::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    box-shadow: 0 -3px 9px var(--accent-glow);
 }
 
 .tab .ic,
 .tab .icon-fallback {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
     margin-right: 5px;
     flex: none;
 }
 
 .tab .icon-fallback {
     font-size: 11px;
-    line-height: 12px;
+    line-height: 11px;
     text-align: center;
     font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
 }
@@ -314,8 +386,14 @@ button {
     opacity: 0.4;
 }
 
-.tab.drag-over {
-    border-bottom-color: var(--text);
+.tab.drag-over::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 0;
+    height: 2px;
+    background: var(--text);
 }
 
 #btn-edit-cat {
@@ -332,8 +410,8 @@ button {
 }
 
 #btn-edit-cat:hover {
-    color: var(--text);
-    background: var(--bg-hover);
+    color: var(--accent);
+    background: var(--accent-wash);
 }
 
 #btn-edit-cat .ic {
@@ -358,11 +436,13 @@ button {
     align-items: center;
     height: 20px;
     padding: 0 10px;
-    background: var(--bg-chrome);
-    font-size: 0.72em;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    background-image: linear-gradient(var(--bg-chrome-hi), var(--bg-chrome));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--border-soft);
+    font-family: var(--disp);
     text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.78em;
     color: var(--text-muted);
 }
 
@@ -374,25 +454,31 @@ button {
     color: var(--text);
 }
 
-.sect::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border-soft);
-    margin-left: 8px;
+.sect .sect-count {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 0.9em;
+    letter-spacing: 0.02em;
+    opacity: 0.75;
 }
 
 .row {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     min-height: 2.15em;
     padding-right: 8px;
-    border-bottom: 1px solid var(--border-soft);
     cursor: pointer;
+    /* stitched hairline instead of a solid rule */
+    background-image: repeating-linear-gradient(90deg, var(--stitch) 0 4px, transparent 4px 8px);
+    background-size: 100% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
 }
 
 .row:hover {
-    background: var(--bg-hover);
+    background-color: var(--bg-hover);
 }
 
 .row-bar {
@@ -400,6 +486,11 @@ button {
     align-self: stretch;
     flex: none;
     margin-right: 8px;
+    transition: box-shadow 0.15s;
+}
+
+.row:hover .row-bar {
+    box-shadow: 0 0 8px 1px currentColor;
 }
 
 .row-name {
@@ -416,10 +507,11 @@ button {
     display: flex;
     align-items: center;
     margin-left: 8px;
-    padding: 1px 7px 1px 5px;
+    padding: 1px 6px 1px 4px;
     border: 1px solid var(--border);
     border-radius: 99px;
-    font-size: 0.75em;
+    font-family: var(--mono);
+    font-size: 0.72em;
     color: var(--text-muted);
 }
 
@@ -427,6 +519,7 @@ button {
     width: 9px;
     height: 9px;
     margin-right: 4px;
+    stroke-width: 2;
 }
 
 .row-actions {
@@ -470,20 +563,54 @@ button {
     box-shadow: inset 0 2px 0 var(--accent);
 }
 
-@keyframes row-flash {
-    from {
-        background-color: var(--bg-active);
+/* The brand sweep — a band of heat crossing the row on apply,
+   like a branding iron passing over. */
+.row-sweep {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    opacity: 0;
+    background-image: linear-gradient(90deg, transparent, var(--accent-sweep), transparent);
+}
+
+.row.fired .row-sweep {
+    animation: row-sweep 480ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+@keyframes row-sweep {
+    0% {
+        opacity: 1;
+        transform: translateX(-101%);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(101%);
     }
 }
 
-.row-applied {
-    animation: row-flash 0.35s ease-out;
-}
-
+/* Empty states carry the mark, ghosted */
 .empty-note {
-    padding: 14px 12px;
+    position: relative;
+    padding: 18px 14px;
     font-size: 0.85em;
     color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.empty-mark {
+    display: block;
+    width: 92px;
+    height: auto;
+    margin: 2px 0 10px;
+    opacity: 0.09;
+}
+
+.empty-mark path {
+    fill: var(--text);
 }
 
 /* ---------- Footer hint bar ---------- */
@@ -494,9 +621,10 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-chrome);
+    background-image: linear-gradient(var(--bg-chrome-hi), var(--bg-chrome));
     border-top: 1px solid var(--border-soft);
-    font-size: 0.76em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    font-size: 0.74em;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -507,7 +635,8 @@ button {
 }
 
 .hintbar b {
-    font-weight: 600;
+    font-family: var(--mono);
+    font-weight: 500;
     color: var(--text);
 }
 
@@ -519,7 +648,7 @@ button {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.62);
     display: none;
     align-items: center;
     justify-content: center;
@@ -531,6 +660,7 @@ button {
 }
 
 .dialog {
+    position: relative;
     background: var(--bg);
     width: 320px;
     max-width: calc(100vw - 24px);
@@ -539,7 +669,19 @@ button {
     border-radius: 5px;
     border: 1px solid var(--border);
     padding: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6);
+}
+
+/* hairline of heat along the top edge */
+.dialog::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 5px 5px 0 0;
 }
 
 .dialog-header {
@@ -550,8 +692,11 @@ button {
 }
 
 .dialog-title {
-    font-weight: 700;
-    font-size: 1em;
+    font-family: var(--disp);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 1.05em;
+    color: #fff;
 }
 
 .close-btn {
@@ -577,11 +722,12 @@ button {
 
 .form-group label {
     display: block;
-    font-size: 0.78em;
-    color: var(--text-muted);
-    margin-bottom: 4px;
+    font-family: var(--disp);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.14em;
+    font-size: 0.76em;
+    color: var(--text-muted);
+    margin-bottom: 5px;
 }
 
 .form-control {
@@ -591,26 +737,29 @@ button {
     color: var(--text);
     padding: 6px 8px;
     border-radius: 3px;
-    font-family: inherit;
+    font-family: var(--sans);
     font-size: 0.93em;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .form-control:focus {
     outline: none;
     border-color: var(--accent);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 2px var(--accent-wash);
 }
 
 textarea.form-control {
     height: 92px;
     resize: vertical;
-    font-family: Consolas, 'SF Mono', Menlo, monospace;
-    font-size: 0.82em;
-    line-height: 1.45;
+    font-family: var(--mono);
+    font-size: 0.78em;
+    line-height: 1.5;
 }
 
 input[type="color"].form-control {
     height: 28px;
     padding: 2px;
+    box-shadow: none;
 }
 
 select.form-control {
@@ -637,8 +786,10 @@ select.form-control {
 }
 
 .chip .chip-type {
+    font-family: var(--mono);
+    font-size: 0.85em;
     color: var(--text-muted);
-    margin-left: 4px;
+    margin-left: 5px;
 }
 
 .chip button {
@@ -661,6 +812,7 @@ select.form-control {
 .chips-empty {
     font-size: 0.8em;
     color: var(--text-muted);
+    line-height: 1.45;
 }
 
 /* Icon picker */
@@ -690,6 +842,7 @@ select.form-control {
 .icon-cell.selected {
     color: var(--accent);
     border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-wash);
 }
 
 .icon-cell .icon-fallback {
@@ -707,18 +860,21 @@ select.form-control {
     width: 100%;
     padding: 8px;
     border-radius: 3px;
-    font-weight: 600;
-    font-size: 0.93em;
+    font-family: var(--disp);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.95em;
     text-align: center;
 }
 
 .btn-save {
     background: var(--accent);
     color: var(--accent-text);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .btn-save:hover {
-    filter: brightness(1.1);
+    filter: brightness(1.12);
 }
 
 .btn-delete {
@@ -743,13 +899,15 @@ select.form-control {
 .slider-container input[type="range"] {
     flex: 1;
     min-width: 0;
+    accent-color: var(--accent);
 }
 
 .slider-val {
     width: 38px;
     flex: none;
     text-align: right;
-    font-size: 0.8em;
+    font-family: var(--mono);
+    font-size: 0.78em;
     color: var(--text-muted);
     margin-left: 8px;
 }
@@ -761,6 +919,7 @@ select.form-control {
 
 .check-row input {
     margin: 0 8px 0 0;
+    accent-color: var(--accent);
 }
 
 .check-row span {
@@ -770,6 +929,13 @@ select.form-control {
 .form-group.disabled {
     opacity: 0.4;
     pointer-events: none;
+}
+
+.field-note {
+    font-size: 0.76em;
+    color: var(--text-muted);
+    margin-top: 5px;
+    line-height: 1.4;
 }
 
 /* ---------- Scrollbars ---------- */
@@ -794,4 +960,14 @@ select.form-control {
     background: var(--text-muted);
     border: 2px solid transparent;
     background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }

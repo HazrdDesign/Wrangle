@@ -26,10 +26,13 @@ let editingCategoryName = null; // category name while editing a category
 let capturedControllers = [];
 let selectedIcon = null;        // icon picked in the category dialog
 
+const BRAND_ACCENT = '#ff5500';
+
 let settings = {
     matchAE: true,
     hue: 220,
-    fontSize: 13
+    fontSize: 13,
+    accent: BRAND_ACCENT
 };
 
 // ---------------------------------------------------------------- INIT
@@ -117,6 +120,7 @@ function wireStaticUI() {
     document.getElementById('set-match').addEventListener('change', updateSettings);
     document.getElementById('set-hue').addEventListener('input', updateSettings);
     document.getElementById('set-font').addEventListener('input', updateSettings);
+    document.getElementById('set-accent').addEventListener('input', updateSettings);
 
     // Overlay click + Escape close any dialog
     const overlays = document.querySelectorAll('.dialog-overlay');
@@ -156,6 +160,7 @@ function loadSettings() {
             if (typeof parsed.hue !== 'undefined') settings.hue = parseInt(parsed.hue, 10) || 220;
             if (typeof parsed.fontSize !== 'undefined') settings.fontSize = parseInt(parsed.fontSize, 10) || 13;
             if (typeof parsed.matchAE !== 'undefined') settings.matchAE = !!parsed.matchAE;
+            if (/^#[0-9a-f]{6}$/i.test(parsed.accent || '')) settings.accent = parsed.accent;
         }
     } catch (e) {
         console.error("Could not read settings, using defaults:", e);
@@ -185,6 +190,7 @@ function applySettings() {
     document.getElementById('val-hue').textContent = settings.hue;
     document.getElementById('set-font').value = settings.fontSize;
     document.getElementById('val-font').textContent = settings.fontSize + 'px';
+    document.getElementById('set-accent').value = settings.accent;
     document.getElementById('hue-group').classList.toggle('disabled', settings.matchAE);
 }
 
@@ -192,6 +198,7 @@ function updateSettings() {
     settings.matchAE = document.getElementById('set-match').checked;
     settings.hue = parseInt(document.getElementById('set-hue').value, 10);
     settings.fontSize = parseInt(document.getElementById('set-font').value, 10);
+    settings.accent = document.getElementById('set-accent').value;
     saveSettings();
     applySettings();
 }
@@ -204,35 +211,63 @@ function applyMatchedTheme() {
         const c = env.appSkinInfo.panelBackgroundColor.color;
         base = { r: Math.round(c.red), g: Math.round(c.green), b: Math.round(c.blue) };
     } catch (e) { /* outside CEP: keep graphite fallback */ }
-    setThemeTokens(base, '#4ba3e3');
+    setThemeTokens(base, settings.accent);
 }
 
 function applyCustomTheme(hue) {
-    const base = hslToRgb(hue, 0.17, 0.10);
-    const accent = hslToRgb(hue, 0.85, 0.58);
-    setThemeTokens(base, rgbToHex(accent));
+    setThemeTokens(hslToRgb(hue, 0.14, 0.12), settings.accent);
 }
 
 function setThemeTokens(base, accentHex) {
+    const a = hexToRgb(accentHex);
+
+    // A neutral pulled a few degrees toward the accent reads as chosen;
+    // a pure grey reads as a default nobody picked.
+    base = biasToward(base, a, 0.055);
+
     const lum = 0.299 * base.r + 0.587 * base.g + 0.114 * base.b;
     const dark = lum < 128;
     const s = document.documentElement.style;
 
     s.setProperty('--bg', rgbStr(base));
-    s.setProperty('--bg-chrome', shade(base, dark ? -10 : -16));
-    s.setProperty('--bg-inset', shade(base, dark ? -14 : -8));
+    s.setProperty('--bg-chrome', shade(base, dark ? -12 : -18));
+    s.setProperty('--bg-chrome-hi', shade(base, dark ? -7 : -13));
+    s.setProperty('--bg-inset', shade(base, dark ? -18 : -8));
     s.setProperty('--bg-hover', shade(base, dark ? 12 : -14));
     s.setProperty('--bg-active', shade(base, dark ? 20 : -22));
     s.setProperty('--border', shade(base, dark ? 24 : -30));
-    s.setProperty('--border-soft', shade(base, dark ? 11 : -14));
-    s.setProperty('--text', dark ? '#d8d8d8' : '#1b1b1b');
-    s.setProperty('--text-muted', dark ? '#979797' : '#5a5a5a');
+    s.setProperty('--border-soft', shade(base, dark ? -22 : -34));
+    s.setProperty('--stitch', shade(base, dark ? 17 : -26));
+    s.setProperty('--text', dark ? '#d9d3cb' : '#1b1917');
+    s.setProperty('--text-muted', dark ? '#8b8079' : '#5c554f');
+
     s.setProperty('--accent', accentHex);
+    s.setProperty('--accent-glow', rgba(a, 0.5));
+    s.setProperty('--accent-wash', rgba(a, 0.12));
+    s.setProperty('--accent-sweep', rgba(a, 0.42));
 
     // Keep button text readable regardless of the accent's hue
-    const a = hexToRgb(accentHex);
     const accentLum = 0.299 * a.r + 0.587 * a.g + 0.114 * a.b;
     s.setProperty('--accent-text', accentLum > 150 ? '#111111' : '#ffffff');
+}
+
+// Tint a neutral toward the accent WITHOUT changing how bright it reads —
+// otherwise "Match After Effects" would drift lighter than AE's own panels.
+function biasToward(base, target, amount) {
+    const before = 0.299 * base.r + 0.587 * base.g + 0.114 * base.b;
+
+    const r = base.r + (target.r - base.r) * amount;
+    const g = base.g + (target.g - base.g) * amount;
+    const b = base.b + (target.b - base.b) * amount;
+
+    const after = 0.299 * r + 0.587 * g + 0.114 * b;
+    const k = after > 0 ? before / after : 1;
+
+    return { r: clamp255(r * k), g: clamp255(g * k), b: clamp255(b * k) };
+}
+
+function rgba(c, alpha) {
+    return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + alpha + ')';
 }
 
 function shade(base, delta) {
@@ -421,7 +456,16 @@ function renderContent() {
 function sectionHeader(cat, count, clickable) {
     const div = document.createElement('div');
     div.className = 'sect' + (clickable ? ' clickable' : '');
-    div.textContent = cat + ' · ' + count;
+
+    const name = document.createElement('span');
+    name.textContent = cat;
+    div.appendChild(name);
+
+    const ct = document.createElement('span');
+    ct.className = 'sect-count';
+    ct.textContent = String(count);
+    div.appendChild(ct);
+
     if (clickable) {
         div.title = 'Go to ' + cat;
         div.addEventListener('click', function () { selectCategory(cat); });
@@ -432,7 +476,17 @@ function sectionHeader(cat, count, clickable) {
 function emptyNote(text) {
     const div = document.createElement('div');
     div.className = 'empty-note';
-    div.textContent = text;
+
+    const mark = document.createElementNS(SVG_NS, 'svg');
+    mark.setAttribute('class', 'empty-mark');
+    mark.setAttribute('viewBox', '-20 0 196 175');
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('href', '#ic-mark');
+    use.setAttributeNS(XLINK_NS, 'xlink:href', '#ic-mark');
+    mark.appendChild(use);
+    div.appendChild(mark);
+
+    div.appendChild(document.createTextNode(text));
     return div;
 }
 
@@ -492,6 +546,10 @@ function createRow(item, cat, index, draggable) {
         row.appendChild(pill);
     }
 
+    const sweep = document.createElement('span');
+    sweep.className = 'row-sweep';
+    row.appendChild(sweep);
+
     const actions = document.createElement('span');
     actions.className = 'row-actions';
     actions.appendChild(rowButton('ic-pencil', 'Edit', false, function (e) {
@@ -547,19 +605,31 @@ function rowButton(icon, title, isDelete, handler) {
     return btn;
 }
 
+// A band of heat crosses the row — the panel's one moment of motion,
+// and confirmation that AE took the click.
 function flashRow(row) {
-    row.classList.remove('row-applied');
+    row.classList.remove('fired');
     // Force reflow so re-adding the class restarts the animation
     void row.offsetWidth;
-    row.classList.add('row-applied');
-    setTimeout(function () { row.classList.remove('row-applied'); }, 400);
+    row.classList.add('fired');
+    setTimeout(function () { row.classList.remove('fired'); }, 520);
 }
 
 // ---------------------------------------------------------------- AE BRIDGE
 
+// evalScript only exists inside CEP; never let its absence (or a host-side
+// failure) break the panel's own feedback.
+function safeEval(script, callback) {
+    try {
+        csInterface.evalScript(script, callback || function () { });
+    } catch (e) {
+        console.error("evalScript unavailable:", e);
+    }
+}
+
 function applyExpression(code, controllers) {
     const script = 'applyExpression(' + JSON.stringify(code) + ', ' + JSON.stringify(controllers || []) + ');';
-    csInterface.evalScript(script, function (result) {
+    safeEval(script, function (result) {
         if (result && result !== 'undefined' && result !== 'null') {
             if (result.indexOf("Error:") === 0) {
                 console.error(result);
@@ -577,7 +647,7 @@ function removeAllExpressions() {
         "You can undo it in After Effects."
     );
     if (!ok) return;
-    csInterface.evalScript("removeAllExpressions();", function () { });
+    safeEval("removeAllExpressions();");
 }
 
 function handleAddButton(e) {
@@ -588,35 +658,29 @@ function handleAddButton(e) {
     openDialog();
     document.getElementById('inp-name').focus();
 
-    try {
-        if (isCtrlClick) {
-            // Ctrl+Click: capture expression ONLY (no controllers)
-            csInterface.evalScript("getSelectedExpression();", function (res) {
-                if (res && res !== 'undefined' && res !== 'null' && res !== "" && res.indexOf("EvalScript") === -1) {
-                    document.getElementById('inp-code').value = res;
-                }
-            });
-        } else {
-            // Normal click: capture expression AND controllers (with current values)
-            csInterface.evalScript("captureExpressionAndControllers();", function (res) {
-                let data = { code: "", controllers: [] };
-                try {
-                    data = JSON.parse(res);
-                } catch (err) {
-                    console.error("Error parsing captured data", err);
-                }
+    if (isCtrlClick) {
+        // Ctrl+Click: capture expression ONLY (no controllers)
+        safeEval("getSelectedExpression();", function (res) {
+            if (res && res !== 'undefined' && res !== 'null' && res !== "" && res.indexOf("EvalScript") === -1) {
+                document.getElementById('inp-code').value = res;
+            }
+        });
+    } else {
+        // Normal click: capture expression AND controllers (with current values)
+        safeEval("captureExpressionAndControllers();", function (res) {
+            let data = { code: "", controllers: [] };
+            try {
+                data = JSON.parse(res);
+            } catch (err) {
+                console.error("Error parsing captured data", err);
+            }
 
-                capturedControllers = data.controllers || [];
-                renderControllerChips();
-                if (data.code) {
-                    document.getElementById('inp-code').value = data.code;
-                }
-            });
-        }
-    } catch (err) {
-        // Outside CEP (browser debugging) evalScript is unavailable — the
-        // dialog still opens for manual entry.
-        console.error("Capture unavailable:", err);
+            capturedControllers = data.controllers || [];
+            renderControllerChips();
+            if (data.code) {
+                document.getElementById('inp-code').value = data.code;
+            }
+        });
     }
 }
 
@@ -732,7 +796,7 @@ function editExpression(cat, id) {
 
     document.getElementById('inp-name').value = item.name;
     document.getElementById('inp-code').value = item.code;
-    document.getElementById('inp-color').value = item.color || "#4ba3e3";
+    document.getElementById('inp-color').value = item.color || "#ff5500";
 
     openDialog(cat);
 }
@@ -746,7 +810,7 @@ function openDialog(preselectCat) {
     if (!isEdit) {
         document.getElementById('inp-name').value = '';
         document.getElementById('inp-code').value = '';
-        document.getElementById('inp-color').value = '#4ba3e3';
+        document.getElementById('inp-color').value = '#ff5500';
     }
 
     // (Re)populate the category select every time

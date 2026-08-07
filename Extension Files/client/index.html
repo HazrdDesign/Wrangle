@@ -10,6 +10,9 @@
 
 <body>
 
+    <!-- Film grain overlay -->
+    <div class="grain"></div>
+
     <!-- Icon set: curated monochrome symbols (stroke-based, 20x20) -->
     <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
         <symbol id="ic-text" viewBox="0 0 20 20"><path d="M4 5h12M10 5v11" /></symbol>
@@ -35,6 +38,12 @@
         <symbol id="ic-x" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></symbol>
         <symbol id="ic-more" viewBox="0 0 20 20"><circle cx="4" cy="10" r="1.6" fill="currentColor" stroke="none" /><circle cx="10" cy="10" r="1.6" fill="currentColor" stroke="none" /><circle cx="16" cy="10" r="1.6" fill="currentColor" stroke="none" /></symbol>
         <symbol id="ic-pencil" viewBox="0 0 20 20"><path d="M13.7 3.2l3.1 3.1-9.9 9.9-4.1 1 1-4.1z" fill="currentColor" stroke="none" /></symbol>
+        <!-- Lasso mark from the wordmark, used ghosted behind empty states -->
+        <symbol id="ic-mark" viewBox="-20 0 196 175">
+            <path
+                d="M146.64,70.32c-.32,26.17-6.53,63.72-37.07,65.8,11.95-17.22,10.95-50.2-13.03-56.13-42.93-5.77-42.99,44.3-12,62.24C24.64,171.45-17.82,77.35,63.88,20.04L46.11,0c-95.05,74.66-25.9,202.27,52.38,148.69,43.28,12.22,65.25-37.98,74.27-71.67l-26.12-6.7ZM76.43,113.05c-5.38-14.04,8.42-26.65,21.43-18.63,10.32,9.61,6.63,28.47-2.09,38.3-8.46-4.02-15.89-11.3-19.34-19.67Z"
+                fill="currentColor" stroke="none" />
+        </symbol>
     </svg>
 
     <div class="app">
@@ -119,7 +128,7 @@
 
             <div class="form-group">
                 <label>Color</label>
-                <input type="color" id="inp-color" class="form-control" value="#4ba3e3">
+                <input type="color" id="inp-color" class="form-control" value="#ff5500">
             </div>
 
             <div class="form-group">
@@ -162,6 +171,13 @@
                     <input type="range" id="set-hue" min="0" max="360" value="220">
                     <span class="slider-val" id="val-hue">220</span>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label>Accent</label>
+                <input type="color" id="set-accent" class="form-control" value="#ff5500">
+                <div class="field-note">Wrangle orange by default. Used for the active tab, focus,
+                    and the apply sweep.</div>
             </div>
 
             <div class="form-group">
