@@ -2,7 +2,7 @@
 
 One-click expressions with their controls. Select timeline properties, then click a library row.
 
-## 1.1 development update
+## 1.3.0 update
 
 - Retires stock IDs **102, 103, 205, 206, 303, 401, 405, and 702**. Seventeen repaired presets remain.
 - Adds visible target labels (such as **Opacity · 1 control**) and host-side compatibility checks.
@@ -12,7 +12,7 @@ One-click expressions with their controls. Select timeline properties, then clic
 - Makes dialogs scroll within narrow/short docks; keyboard focus and Escape are supported.
 - Migrates the existing library without resetting custom categories or edited expressions.
 
-This source update has automated/mock and browser validation. **Live After Effects acceptance and signing remain pending. The ZXP in Builds is the old 1.0 build; it is not this update.**
+This update has automated/mock and browser validation. Download the signed Wrangle-v1.3.0.zxp from GitHub Releases. Live After Effects acceptance remains pending. The legacy Builds/Wrangle.zxp on main is not this release.
 
 ## Use
 
@@ -42,7 +42,7 @@ Target: After Effects 17.0.1 or later with CEP 9+, using the JavaScript expressi
 
 Run `node tests/run.cjs`. No dependencies are required. The checks use AE mocks and cannot replace a real AE run.
 
-The panel can be served from `Extension Files/client` for visual testing; timeline actions explain that AE is required. The test source bundle is unsigned. For AE development, use the normal CEP development installation process; for distribution, validate in AE and produce a freshly signed ZXP.
+The panel can be served from `Extension Files/client` for visual testing; timeline actions explain that AE is required. The source ZIP is not an installer; use the signed ZXP from GitHub Releases. For AE development, use the normal CEP development installation process; for distribution, validate in AE and produce a freshly signed ZXP.
 
 See [release notes and acceptance checklist](docs/UPDATE-1.1.md) and [community research](docs/COMMUNITY-EXPRESSIONS.md).
 
