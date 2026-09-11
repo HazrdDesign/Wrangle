@@ -1,573 +1,233 @@
-// Main Logic
 const csInterface = new CSInterface();
-let activeCat = "Text";
-let editingId = null; // Track if we are editing an existing item
+const $ = id => document.getElementById(id);
+let activeCat = null, editingItem = null, editingCat = null, categoryBeingEdited = null;
+let capturedControllers = [], captureWarnings = [], resultDetails = [], busy = false;
+let focusBeforeModal = null, dragged = null;
+const accentDefault = '#ff8033';
 
-// Initialize
-// Initialize
-window.onload = function () {
-    try {
-        LibraryManager.init();
-        initSettings(); // Load and apply settings
-
-        // Set active category
-        const cats = LibraryManager.getCategories();
-        if (cats.length > 0 && !cats.includes(activeCat)) {
-            activeCat = cats[0];
-        }
-
-        renderSidebar();
-        renderContent();
-
-        // Global Event Listeners
-        document.getElementById('btn-remove-all').onclick = removeAllExpressions;
-
-        // Settings Listeners
-        document.getElementById('set-hue').addEventListener('input', updateSettings);
-        document.getElementById('set-font').addEventListener('input', updateSettings);
-    } catch (e) {
-        alert("Wrangle Initialization Error: " + e.message);
-        console.error(e);
-    }
-};
-
-// --- SETTINGS ---
+function setStatus(message, errors, details) {
+    $('status-text').textContent = message;
+    document.querySelector('.status').classList.toggle('error',!!errors);
+    resultDetails = details || [];
+    $('status-details-btn').hidden = !resultDetails.length;
+}
+function showPersistence() {
+    if(LibraryManager.warning) setStatus(LibraryManager.warning,true);
+}
+function guard(action,errorId) {
+    try { action(); showPersistence(); }
+    catch(e) { if(errorId) $(errorId).textContent=e.message; else setStatus(e.message,true); }
+}
+function applyAccent(color,save) {
+    if(!/^#[0-9a-f]{6}$/i.test(color)) color=accentDefault;
+    const rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));
+    document.documentElement.style.setProperty('--accent',color);
+    document.documentElement.style.setProperty('--accent-soft','rgba('+rgb.join(',')+',.13)');
+    document.documentElement.style.setProperty('--accent-border','rgba('+rgb.join(',')+',.36)');
+    const lum=rgb.map(v=>{v/=255;return v<=0.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
+    document.documentElement.style.setProperty('--accent-ink',lum[0]*.2126+lum[1]*.7152+lum[2]*.0722>.179?'#151515':'#ffffff');
+    $('set-accent').value=color;$('accent-value').textContent=color.toUpperCase();
+    if(save)guard(()=>localStorage.setItem('wrangle_settings',JSON.stringify({accent:color})));
+}
 function initSettings() {
-    const saved = localStorage.getItem('wrangle_settings');
-    if (saved) {
-        const settings = JSON.parse(saved);
-        document.documentElement.style.setProperty('--hue', settings.hue);
-        document.documentElement.style.setProperty('--base-font-size', settings.fontSize + 'px');
-
-        document.getElementById('set-hue').value = settings.hue;
-        document.getElementById('val-hue').innerText = settings.hue;
-
-        document.getElementById('set-font').value = settings.fontSize;
-        document.getElementById('val-font').innerText = settings.fontSize + 'px';
+    let color=accentDefault;
+    try{const stored=JSON.parse(localStorage.getItem('wrangle_settings')||'{}');color=stored.accent||accentDefault;}catch(e){}
+    applyAccent(color,false);
+}
+function closeMenu() { $('actions-menu').hidden=true;$('open-menu').setAttribute('aria-expanded','false'); }
+function openModal(id) {
+    closeMenu();focusBeforeModal=document.activeElement;
+    $(id).hidden=false;
+    const focus=$(id).querySelector('input:not([type=checkbox]),button,select,textarea');
+    if(focus)focus.focus();
+}
+function closeModal(id) {
+    $(id).hidden=true;
+    if(focusBeforeModal&&document.contains(focusBeforeModal))focusBeforeModal.focus();
+    if(id==='expression-modal'){editingItem=null;capturedControllers=[];}
+}
+function bridge(functionName,args,callback) {
+    if(!window.__adobe_cep__) {
+        callback({ok:false,errors:['Open Wrangle inside After Effects to use timeline actions.']});return;
     }
+    if(busy) {setStatus('Waiting for After Effects…',false);return;}
+    busy=true;
+    const payload=(args||[]).map(x=>JSON.stringify(x).replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029')).join(',');
+    try {
+        csInterface.evalScript(functionName+'('+payload+');',raw=>{
+            busy=false;
+            let response;
+            try{response=JSON.parse(raw);if(!response||typeof response.ok!=='boolean')throw Error();}
+            catch(e){response={ok:false,errors:['After Effects did not return a valid result. Check that the updated host script is installed.']};}
+            callback(response);
+        });
+    }catch(e){busy=false;callback({ok:false,errors:[e.message]});}
 }
-
-function updateSettings(e) {
-    const hue = document.getElementById('set-hue').value;
-    const fontSize = document.getElementById('set-font').value;
-
-    document.documentElement.style.setProperty('--hue', hue);
-    document.documentElement.style.setProperty('--base-font-size', fontSize + 'px');
-
-    document.getElementById('val-hue').innerText = hue;
-    document.getElementById('val-font').innerText = fontSize + 'px';
-
-    localStorage.setItem('wrangle_settings', JSON.stringify({
-        hue: hue,
-        fontSize: fontSize
-    }));
-}
-
-function openSettings() {
-    document.getElementById('settings-modal').style.display = 'flex';
-}
-
-function closeSettings() {
-    document.getElementById('settings-modal').style.display = 'none';
-}
-
-function showHelp() {
-    document.getElementById('help-modal').style.display = 'flex';
-}
-
-function closeHelp() {
-    document.getElementById('help-modal').style.display = 'none';
-}
-
-let editingCategoryName = null;
-
-function editCategory(e, name) {
-    if (e) e.stopPropagation();
-    openCategoryDialog(name);
-}
-
-function handleAddCategoryButton(e) {
-    openCategoryDialog(null); // null means new category
-}
-
-function openCategoryDialog(oldName) {
-    editingCategoryName = oldName;
-
-    if (oldName) {
-        // Edit existing
-        document.getElementById('inp-cat-name').value = oldName;
-        document.getElementById('inp-cat-icon').value = LibraryManager.getIcon(oldName);
-        document.getElementById('btn-del-cat').style.display = 'block'; // Show delete
-        document.querySelector('#category-modal .dialog-title').innerText = "Edit Category";
-    } else {
-        // Create new
-        document.getElementById('inp-cat-name').value = '';
-        document.getElementById('inp-cat-icon').value = '';
-        document.getElementById('btn-del-cat').style.display = 'none'; // Hide delete
-        document.querySelector('#category-modal .dialog-title').innerText = "New Category";
-    }
-
-    document.getElementById('category-modal').style.display = 'flex';
-    document.getElementById('inp-cat-name').focus();
-}
-
-function closeCategoryDialog() {
-    document.getElementById('category-modal').style.display = 'none';
-    editingCategoryName = null;
-}
-
-function saveCategoryName() {
-    const newName = document.getElementById('inp-cat-name').value.trim();
-    const newIcon = document.getElementById('inp-cat-icon').value.trim();
-
-    if (!newName) {
-        alert("Category name cannot be empty");
-        return;
-    }
-
-    if (editingCategoryName) {
-        // Rename if changed
-        if (newName !== editingCategoryName) {
-            LibraryManager.renameCategory(editingCategoryName, newName);
-            if (activeCat === editingCategoryName) {
-                activeCat = newName;
-            }
-        }
-        // Update Icon
-        if (newIcon) {
-            LibraryManager.setIcon(newName, newIcon);
-        }
-    } else {
-        // Create New
-        if (!LibraryManager.createCategory(newName, newIcon)) {
-            alert("Category already exists!");
-            return;
-        }
-        activeCat = newName; // Switch to new category
-    }
-
-    renderSidebar();
-    renderContent();
-    closeCategoryDialog();
-}
-
-function deleteCategoryBtn() {
-    if (!editingCategoryName) return;
-
-    if (confirm(`Are you sure you want to delete the category "${editingCategoryName}" and all its expressions?`)) {
-        LibraryManager.deleteCategory(editingCategoryName);
-
-        // Reset active category if we deleted the current one
-        if (activeCat === editingCategoryName) {
-            const cats = LibraryManager.getCategories();
-            activeCat = cats.length > 0 ? cats[0] : null;
-        }
-
-        renderSidebar();
-        renderContent();
-        closeCategoryDialog();
-    }
-}
-
-// --- AE INTERACTIONS ---
-
-let capturedControllers = [];
-
-function applyExpression(code, controllers) {
-    const escapedCode = JSON.stringify(code);
-    const escapedControllers = JSON.stringify(controllers || []);
-    const script = `applyExpression(${escapedCode}, ${escapedControllers});`;
-
-    csInterface.evalScript(script, function (result) {
-        // Result handling - JSX returns string
-        if (result && result !== 'undefined' && result !== 'null') {
-            if (result.startsWith("Error:")) {
-                console.error(result);
-                // Optional: Show toast or visual feedback for error
-            } else {
-                console.log("Expression applied successfully");
-            }
-        }
+function applyItem(item,event) {
+    const mode=event.ctrlKey||event.metaKey?'expression':event.altKey?'controllers':'both';
+    const spec=Object.assign({},targetTypes[item.target]||targetTypes.any,{requiresKeys:item.requiresKeys||0});
+    setStatus('Applying '+item.name+'…',false);
+    bridge('applyExpression',[item.code,item.controllers||[],spec,mode],res=>{
+        const details=(res.errors||[]).concat(res.warnings||[]);
+        let message;
+        if(!res.ok)message=(res.errors||[])[0]||'Expression could not be applied.';
+        else if(mode==='controllers')message=res.controllers?'Added '+res.controllers+' controller'+(res.controllers===1?'':'s')+'.':'Controllers already exist; their values were kept.';
+        else message='Applied to '+res.applied+' propert'+(res.applied===1?'y':'ies')+(res.skipped?' · '+res.skipped+' skipped':'')+'.';
+        setStatus(message,!res.ok,details);
     });
 }
-
-function removeAllExpressions() {
-    csInterface.evalScript("removeAllExpressions();", function (res) {
-        if (res === 'undefined' || res === 'null') return;
+function removeSelected() {
+    bridge('removeAllExpressions',[],res=>{
+        setStatus(res.ok?'Removed expressions from '+res.applied+' selected propert'+(res.applied===1?'y.':'ies.'):(res.errors||[])[0],!res.ok,res.errors||[]);
     });
 }
-
-function handleAddButton(e) {
-    // Check for modifier keys (Ctrl on Windows, Cmd on Mac)
-    const isCtrlClick = e && (e.ctrlKey || e.metaKey);
-
-    if (isCtrlClick) {
-        // Ctrl+Click: Capture expression ONLY (no controllers)
-        csInterface.evalScript("getSelectedExpression();", function (res) {
-            capturedControllers = []; // No controllers
-            openDialog(false);
-
-            if (res && res !== 'undefined' && res !== 'null' && res !== "") {
-                document.getElementById('inp-code').value = res;
-            }
-            document.getElementById('inp-name').focus();
-        });
-    } else {
-        // Normal Click: Capture expression AND controllers
-        csInterface.evalScript("captureExpressionAndControllers();", function (res) {
-            let data = { code: "", controllers: [] };
-            try {
-                data = JSON.parse(res);
-            } catch (err) {
-                console.error("Error parsing captured data", err);
-            }
-
-            capturedControllers = data.controllers || [];
-            openDialog(true); // Open with smart save flag
-
-            if (data.code) {
-                document.getElementById('inp-code').value = data.code;
-            }
-            document.getElementById('inp-name').focus();
-        });
-    }
+function make(tag,className,text) {const node=document.createElement(tag);if(className)node.className=className;if(text!=null)node.textContent=text;return node;}
+function render() {
+    const cats=LibraryManager.getCategories();
+    if(!cats.includes(activeCat))activeCat=cats[0]||null;
+    renderSidebar();renderContent();$('edit-category').disabled=!activeCat;
 }
-
-function escapeString(str) {
-    return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/'/g, "\\'");
+function reorderEvents(node,kind,index) {
+    node.draggable=true;
+    node.addEventListener('dragstart',e=>{
+        dragged={kind,index,cat:activeCat};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','wrangle:'+kind);
+        node.classList.add('dragging');
+    });
+    node.addEventListener('dragover',e=>{if(dragged&&dragged.kind===kind){e.preventDefault();node.classList.add('drag-over');}});
+    node.addEventListener('dragleave',()=>node.classList.remove('drag-over'));
+    node.addEventListener('drop',e=>{
+        node.classList.remove('drag-over');
+        if(!dragged||dragged.kind!==kind)return;
+        e.preventDefault();e.stopPropagation();
+        guard(()=>{if(kind==='category')LibraryManager.reorderCategories(dragged.index,index);else if(dragged.cat===activeCat)LibraryManager.reorderExpression(activeCat,dragged.index,index);});
+        dragged=null;render();
+    });
+    node.addEventListener('dragend',()=>{dragged=null;document.querySelectorAll('.dragging,.drag-over').forEach(n=>n.classList.remove('dragging','drag-over'));});
 }
-
-// --- RENDER FUNCTIONS ---
-
 function renderSidebar() {
-    const el = document.getElementById('sidebar-nav');
-    el.innerHTML = '';
-
-
-    const categories = LibraryManager.getCategories();
-
-    categories.forEach((cat, index) => {
-        let div = document.createElement('div');
-        div.className = `nav-item ${cat === activeCat ? 'active' : ''}`;
-        div.draggable = true;
-        div.dataset.index = index;
-        div.dataset.category = cat;
-
-        const iconContent = LibraryManager.getIcon(cat);
-        const iconHtml = iconContent.includes('<svg')
-            ? `<span class="nav-icon">${iconContent}</span>`
-            : `<span class="nav-icon">${iconContent}</span>`;
-
-        div.innerHTML = `
-            ${iconHtml}
-            ${cat}
-            <span class="category-edit-icon" onclick="editCategory(event, '${escapeString(cat)}')">✎</span>
-        `;
-
-        div.onclick = (e) => {
-            if (e.target.classList.contains('category-edit-icon')) return;
-            activeCat = cat;
-            renderSidebar();
-            renderContent();
-        };
-
-        // Drag events for categories
-        div.addEventListener('dragstart', handleCategoryDragStart);
-        div.addEventListener('dragover', handleCategoryDragOver);
-        div.addEventListener('drop', handleCategoryDrop);
-        div.addEventListener('dragenter', handleCategoryDragEnter);
-        div.addEventListener('dragleave', handleCategoryDragLeave);
-        div.addEventListener('dragend', handleCategoryDragEnd);
-
-        el.appendChild(div);
+    $('sidebar-nav').textContent='';
+    LibraryManager.getCategories().forEach((cat,index)=>{
+        const b=make('button','nav-item'+(cat===activeCat?' active':''),cat);
+        b.setAttribute('aria-pressed',String(cat===activeCat));
+        b.addEventListener('click',()=>{activeCat=cat;render();});
+        reorderEvents(b,'category',index);$('sidebar-nav').appendChild(b);
     });
 }
-
 function renderContent() {
-    const el = document.getElementById('content');
-    el.innerHTML = '';
-
-    // Update Header
-    document.getElementById('cat-title').innerText = `${activeCat} LIBRARY`;
-    const items = LibraryManager.getItems(activeCat);
-    document.getElementById('item-count').innerText = `${items.length} ITEMS`;
-
-    items.forEach((item, index) => {
-        let card = document.createElement('div');
-        card.className = 'expr-card';
-        card.draggable = true; // Enable drag
-        card.dataset.index = index; // Store index
-
-        // Set color via CSS variable for the dot indicator
-        if (item.color) {
-            card.style.setProperty('--card-color', item.color);
-        }
-
-        card.innerHTML = `
-            <div class="expr-name">${item.name}</div>
-            <div class="expr-meta">
-                <div class="action-icons">
-                    <span class="action-icon" onclick="editExpression(event, ${item.id})">✎</span>
-                    <span class="action-icon delete" onclick="deleteExpression(event, ${item.id})">🗑</span>
-                </div>
-            </div>
-        `;
-
-        // Drag Events
-        card.addEventListener('dragstart', handleDragStart);
-        card.addEventListener('dragover', handleDragOver);
-        card.addEventListener('drop', handleDrop);
-        card.addEventListener('dragenter', handleDragEnter);
-        card.addEventListener('dragleave', handleDragLeave);
-        card.addEventListener('dragend', handleDragEnd);
-
-        // Interaction Logic
-        card.onclick = (e) => {
-            // If clicked on action icons, do nothing (handled by their onclick)
-            if (e.target.closest('.action-icon')) return;
-
-            if (e.ctrlKey || e.metaKey) {
-                // Ctrl+Click: Apply expression ONLY (no controllers)
-                applyExpression(item.code, []);
-                card.style.transform = 'scale(0.98)';
-                setTimeout(() => card.style.transform = '', 100);
-            } else if (e.altKey) {
-                // Alt+Click: Apply controllers ONLY (no expression)
-                if (item.controllers && item.controllers.length > 0) {
-                    applyExpression('', item.controllers);
-                    card.style.backgroundColor = 'hsla(var(--hue), 100%, 58%, 0.2)';
-                    setTimeout(() => card.style.backgroundColor = '', 200);
-                }
-            } else {
-                // Normal Click: Apply expression AND controllers
-                applyExpression(item.code, item.controllers || []);
-                card.style.transform = 'scale(0.98)';
-                setTimeout(() => card.style.transform = '', 100);
-            }
-        };
-
-        el.appendChild(card);
+    const items=activeCat?LibraryManager.getItems(activeCat):[];
+    $('cat-title').textContent=activeCat||'Your library';
+    $('item-count').textContent=items.length+' expression'+(items.length===1?'':'s');
+    $('content').textContent='';
+    if(!items.length){$('content').appendChild(make('p','empty',activeCat?'No expressions here yet. Use + to add one.':'Add a category or use + to save your first expression.'));return;}
+    items.forEach((item,index)=>{
+        const row=make('div','expr-card'),apply=make('button','apply-btn');
+        apply.appendChild(make('span','expr-name',item.name));
+        const label=(targetTypes[item.target]||targetTypes.any).label;
+        const count=(item.controllers||[]).length;
+        apply.appendChild(make('span','expr-target',label+(count?' · '+count+' control'+(count===1?'':'s'):'')));
+        if(item.requiresKeys)apply.appendChild(make('span','requirement','Requires '+item.requiresKeys+'+ keyframes'));
+        if(item.description)apply.title=item.description;
+        apply.setAttribute('aria-label','Apply '+item.name+' to '+label);
+        apply.addEventListener('click',e=>applyItem(item,e));row.appendChild(apply);
+        const actions=make('div','row-actions');
+        const edit=make('button','','✎');edit.title='Edit '+item.name;edit.setAttribute('aria-label','Edit '+item.name);
+        edit.addEventListener('click',()=>openEditor(item));
+        const del=make('button','','×');del.title='Delete '+item.name;del.setAttribute('aria-label','Delete '+item.name);
+        del.addEventListener('click',()=>{if(confirm('Delete "'+item.name+'" from your library?'))guard(()=>{LibraryManager.removeExpression(activeCat,item.id);render();});});
+        actions.append(edit,del);row.appendChild(actions);reorderEvents(row,'expression',index);$('content').appendChild(row);
     });
 }
-
-// --- DRAG AND DROP HANDLERS ---
-let dragSrcEl = null;
-
-function handleDragStart(e) {
-    dragSrcEl = this;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.innerHTML);
-    this.classList.add('dragging');
+function populateSelect(id,options,selected) {
+    $(id).textContent='';
+    options.forEach(x=>{const option=make('option','',x.label);option.value=x.value;option.selected=x.value===selected;$(id).appendChild(option);});
 }
-
-function handleDragOver(e) {
-    if (e.preventDefault) {
-        e.preventDefault();
-    }
-    e.dataTransfer.dropEffect = 'move';
-    return false;
+function openEditor(item,data) {
+    editingItem=item?LibraryManager.clone(item):null;editingCat=activeCat;
+    data=data||{};capturedControllers=LibraryManager.clone(item?item.controllers||[]:data.controllers||[]);
+    captureWarnings=data.warnings||[];
+    $('expression-title').textContent=item?'Edit expression':'Add expression';
+    $('inp-name').value=item?item.name:'';$('inp-code').value=item?item.code:data.code||'';
+    const cats=LibraryManager.getCategories();if(!cats.includes('Custom'))cats.push('Custom');
+    populateSelect('inp-cat',cats.map(c=>({value:c,label:c})),activeCat||'Custom');
+    let target=item?item.target:'any';
+    if(!item&&data.matchName)Object.keys(targetTypes).some(key=>{
+        if((targetTypes[key].matchNames||[]).includes(data.matchName)){target=key;return true;}return false;
+    });
+    populateSelect('inp-target',Object.keys(targetTypes).map(k=>({value:k,label:targetTypes[k].label})),target||'any');
+    $('include-controllers').checked=true;$('include-controllers').disabled=!capturedControllers.length;
+    $('ctrl-status').textContent=capturedControllers.length?capturedControllers.length+' captured controller'+(capturedControllers.length===1?'':'s')+'. Existing matching controls keep their values.':'No controllers captured.';
+    $('controller-list').textContent='';
+    capturedControllers.forEach(c=>$('controller-list').appendChild(make('li','',(c.label||c.name)+' · '+(c.layerName|| (c.value==null?'Default value':Array.isArray(c.value)?c.value.join(', '):String(c.value))))));
+    $('capture-note').textContent=captureWarnings.join(' ');$('expression-error').textContent='';
+    openModal('expression-modal');$('inp-name').focus();
 }
-
-function handleDragEnter(e) {
-    this.classList.add('drag-over');
-}
-
-function handleDragLeave(e) {
-    this.classList.remove('drag-over');
-}
-
-function handleDrop(e) {
-    if (e.stopPropagation) {
-        e.stopPropagation();
-    }
-
-    if (dragSrcEl !== this) {
-        const fromIndex = parseInt(dragSrcEl.dataset.index);
-        const toIndex = parseInt(this.dataset.index);
-
-        LibraryManager.reorderExpression(activeCat, fromIndex, toIndex);
-        renderContent(); // Re-render to reflect new order
-    }
-    return false;
-}
-
-function handleDragEnd(e) {
-    this.classList.remove('dragging');
-    const items = document.querySelectorAll('.expr-card');
-    items.forEach(function (item) {
-        item.classList.remove('drag-over');
+function addExpression(event) {
+    if(!window.__adobe_cep__){openEditor(null,{warnings:['Browser preview: write an expression here. Timeline capture is available in After Effects.']});return;}
+    bridge('captureExpressionAndControllers',[!(event.ctrlKey||event.metaKey)],res=>{
+        if(!res.ok){setStatus((res.errors||[])[0],true);return;}openEditor(null,res);
     });
 }
-
-// --- CATEGORY DRAG AND DROP ---
-
-let dragSrcCategory = null;
-
-function handleCategoryDragStart(e) {
-    dragSrcCategory = this;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.innerHTML);
-    this.classList.add('dragging');
-}
-
-function handleCategoryDragOver(e) {
-    if (e.preventDefault) {
-        e.preventDefault();
-    }
-    e.dataTransfer.dropEffect = 'move';
-    return false;
-}
-
-function handleCategoryDragEnter(e) {
-    this.classList.add('drag-over');
-}
-
-function handleCategoryDragLeave(e) {
-    this.classList.remove('drag-over');
-}
-
-function handleCategoryDrop(e) {
-    if (e.stopPropagation) {
-        e.stopPropagation();
-    }
-
-    if (dragSrcCategory !== this) {
-        const fromIndex = parseInt(dragSrcCategory.dataset.index);
-        const toIndex = parseInt(this.dataset.index);
-
-        LibraryManager.reorderCategories(fromIndex, toIndex);
-        renderSidebar();
-    }
-    return false;
-}
-
-function handleCategoryDragEnd(e) {
-    this.classList.remove('dragging');
-    const items = document.querySelectorAll('.nav-item');
-    items.forEach(function (item) {
-        item.classList.remove('drag-over');
-    });
-}
-function deleteExpression(e, id) {
-    e.stopPropagation();
-    if (confirm("Delete this expression?")) {
-        LibraryManager.removeExpression(activeCat, id);
-        renderContent();
-    }
-}
-
-function editExpression(e, id) {
-    e.stopPropagation();
-    const items = LibraryManager.getItems(activeCat);
-    const item = items.find(i => i.id === id);
-    if (!item) return;
-
-    editingId = id; // Set editing mode
-    capturedControllers = item.controllers || []; // Load existing controllers
-
-    // Populate Dialog
-    document.getElementById('inp-name').value = item.name;
-    document.getElementById('inp-code').value = item.code;
-    document.getElementById('inp-color').value = item.color || "#2997ff";
-
-    // Populate Category Select
-    const sel = document.getElementById('inp-cat');
-    sel.innerHTML = '';
-    const categories = LibraryManager.getCategories();
-    categories.forEach(cat => {
-        let opt = document.createElement('option');
-        opt.value = cat;
-        opt.text = cat;
-        if (cat === activeCat) opt.selected = true;
-        sel.add(opt);
-    });
-
-    openDialog(false); // Not a smart save, just edit
-
-    // Update status for edit mode
-    const statusEl = document.getElementById('ctrl-status');
-    if (capturedControllers.length > 0) {
-        statusEl.innerText = "Yes (" + capturedControllers.length + ")";
-        statusEl.style.color = "var(--accent)";
-    } else {
-        statusEl.innerText = "None";
-        statusEl.style.color = "#6e7681";
-    }
-}
-
-// --- DIALOG LOGIC ---
-
-const dialog = document.getElementById('dialog');
-
-function openDialog(isSmartSave) {
-    const statusEl = document.getElementById('ctrl-status');
-
-    if (!editingId) {
-        // Clear fields if adding new
-        document.getElementById('inp-name').value = '';
-        document.getElementById('inp-code').value = '';
-        document.getElementById('inp-color').value = '#2997ff';
-
-        // Populate Category Select
-        const sel = document.getElementById('inp-cat');
-        sel.innerHTML = '';
-        const categories = LibraryManager.getCategories();
-        categories.forEach(cat => {
-            let opt = document.createElement('option');
-            opt.value = cat;
-            opt.text = cat;
-            if (cat === activeCat) opt.selected = true;
-            sel.add(opt);
+function saveExpression(event) {
+    event.preventDefault();
+    guard(()=>{
+        const name=$('inp-name').value.trim(),code=$('inp-code').value.trim(),cat=$('inp-cat').value,target=$('inp-target').value;
+        if(!name||!code)throw Error('Name and expression are required.');
+        const item=Object.assign({},editingItem||{},{
+            id:editingItem?editingItem.id:'user-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+            name,code,target,controllers:$('include-controllers').checked?capturedControllers:[]
         });
-        // Add Custom if not there
-        if (!categories.includes("Custom")) {
-            let opt = document.createElement('option');
-            opt.value = "Custom";
-            opt.text = "Custom";
-            sel.add(opt);
-        }
-
-        // Update Status
-        if (isSmartSave && capturedControllers.length > 0) {
-            statusEl.innerText = "Yes (" + capturedControllers.length + ")";
-            statusEl.style.color = "var(--accent)";
-        } else {
-            statusEl.innerText = "None";
-            statusEl.style.color = "#6e7681";
-        }
-    }
-
-    dialog.style.display = 'flex';
+        if(editingItem&&(code!==editingItem.code||target!==editingItem.target)){delete item.requiresKeys;delete item.description;}
+        LibraryManager.saveExpression(editingCat,editingItem?editingItem.id:null,cat,item);
+        activeCat=cat;closeModal('expression-modal');render();setStatus('Expression saved.',false);
+    },'expression-error');
 }
-
-function closeDialog() {
-    dialog.style.display = 'none';
-    editingId = null;
-    capturedControllers = []; // Clear
+function openCategory(name) {
+    categoryBeingEdited=name;$('category-title').textContent=name?'Edit category':'New category';
+    $('inp-cat-name').value=name||'';$('delete-category').hidden=!name;$('category-error').textContent='';
+    openModal('category-modal');$('inp-cat-name').focus();
 }
-
-function saveExpression() {
-    const name = document.getElementById('inp-name').value;
-    const code = document.getElementById('inp-code').value;
-    const cat = document.getElementById('inp-cat').value;
-    const color = document.getElementById('inp-color').value;
-
-    if (!name || !code) { alert("Name and Code are required"); return; }
-
-    if (editingId) {
-        LibraryManager.removeExpression(activeCat, editingId);
-    }
-
-    LibraryManager.addExpression(cat, {
-        id: Date.now(),
-        name: name,
-        code: code,
-        color: color,
-        controllers: capturedControllers // Save controllers
+function saveCategory(event) {
+    event.preventDefault();guard(()=>{
+        const name=$('inp-cat-name').value.trim();
+        if(categoryBeingEdited)LibraryManager.renameCategory(categoryBeingEdited,name,LibraryManager.getIcon(categoryBeingEdited));
+        else LibraryManager.createCategory(name,'');
+        activeCat=name;closeModal('category-modal');render();
+    },'category-error');
+}
+window.addEventListener('DOMContentLoaded',()=>{
+    initSettings();
+    try{LibraryManager.init();render();showPersistence();}
+    catch(e){setStatus(e.message,true);$('add-expression').disabled=true;$('open-menu').disabled=true;return;}
+    $('add-expression').addEventListener('click',addExpression);
+    $('open-menu').addEventListener('click',()=>{$('actions-menu').hidden=!$('actions-menu').hidden;$('open-menu').setAttribute('aria-expanded',String(!$('actions-menu').hidden));});
+    $('add-category').addEventListener('click',()=>openCategory(null));
+    $('edit-category').addEventListener('click',()=>openCategory(activeCat));
+    $('remove-selected').addEventListener('click',()=>{closeMenu();removeSelected();});
+    $('open-settings').addEventListener('click',()=>openModal('settings-modal'));
+    $('open-help').addEventListener('click',()=>openModal('help-modal'));
+    $('set-accent').addEventListener('input',e=>applyAccent(e.target.value,true));
+    $('reset-accent').addEventListener('click',()=>applyAccent(accentDefault,true));
+    $('expression-form').addEventListener('submit',saveExpression);
+    $('category-form').addEventListener('submit',saveCategory);
+    $('delete-category').addEventListener('click',()=>{
+        if(confirm('Delete "'+categoryBeingEdited+'" and all '+LibraryManager.getItems(categoryBeingEdited).length+' expressions in it?')){
+            guard(()=>{LibraryManager.deleteCategory(categoryBeingEdited);closeModal('category-modal');render();},'category-error');
+        }
     });
+    document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+    $('status-details-btn').addEventListener('click',()=>{
+        $('result-details').textContent='';resultDetails.forEach(t=>$('result-details').appendChild(make('li','',t)));openModal('details-modal');
+    });
+    document.addEventListener('click',e=>{if(!$('actions-menu').contains(e.target)&&!$('open-menu').contains(e.target))closeMenu();});
+    document.addEventListener('keydown',e=>{
+        const modal=document.querySelector('.dialog-overlay:not([hidden])');
+        if(e.key==='Escape'){if(modal)closeModal(modal.id);else closeMenu();}
+        if(e.key==='Tab'&&modal){
+            const controls=Array.from(modal.querySelectorAll('button,input,textarea,select,[tabindex="0"]')).filter(x=>!x.disabled&&x.getClientRects().length);
+            const first=controls[0],last=controls[controls.length-1];
+            if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+            else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+        }
+    });
+});
 
-    activeCat = cat; // Switch to new category
-    closeDialog();
-    renderSidebar();
-    renderContent();
-}
