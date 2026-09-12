@@ -2,6 +2,11 @@
 
 One-click expressions with their controls. Select timeline properties, then click a library row.
 
+## 1.5.0 update
+
+Seven additions bring the library to 32 presets: Constant Drift, Random Position, Maintain Scale When Parented, Auto-Orient Along Path, Random Reveal, Random Fade In, and Opacity Wave. Each includes controls, property comments, source links, and author attribution. NoSleepCreative is credited for six adaptations; Auto-Orient credits its original author, Videolancer.
+
+[Full 1.5 notes and limitations](docs/UPDATE-1.5.md). Download the signed Wrangle-v1.5.0.zxp from GitHub Releases. 46 automated checks passed; live After Effects testing remains pending.
 ## 1.4.0 update
 
 - Ships 25 presets, with property comments and controller defaults for every expression.
@@ -29,7 +34,7 @@ A controller already present with the same name and type is reused without reset
 Windows: `%APPDATA%/Hazrd/Wrangle/data.json`
 macOS: `~/Library/Application Support/Hazrd/Wrangle/data.json`
 
-Before upgrading an older library, Wrangle creates a timestamped pre-v13 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the requested stock IDs while adding newly introduced presets. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
+Before upgrading an older library, Wrangle creates a timestamped pre-v14 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the requested stock IDs while adding newly introduced presets. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
 
 Writes use a temporary file and rename. A revision number chooses the newest valid file/browser copy after a failed save. Errors appear in the panel. Recovering edits already lost by an earlier v11 migration requires an existing backup.
 

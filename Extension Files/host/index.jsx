@@ -37,8 +37,14 @@ function wrangleCompatible(prop,layer,spec) {
     spec=spec||{};
     if(!prop.canSetExpression) return "This property does not accept expressions.";
     if(spec.matchNames && !wrangleContains(spec.matchNames,prop.matchName)) return "Use "+spec.label+".";
+    if(spec.motionPosition) {
+        var transformGroup=layer.property("ADBE Transform Group");
+        var motion=transformGroup && transformGroup.property("ADBE Position");
+        if(!motion || motion.dimensionsSeparated) return "Use animated, unseparated layer Position for Auto-Orient.";
+        if(layer.autoOrient!==undefined && typeof AutoOrientType!=="undefined" && layer.autoOrient!==AutoOrientType.NO_AUTO_ORIENT) return "Turn off the layer's built-in Auto-Orient first.";
+    }
     if(spec.boundsLayer && !layer.property("ADBE Text Properties") && !layer.property("ADBE Root Vectors Group")) return "Use Anchor Point on a text or shape layer.";
-    if(spec.twoDChain) {var ancestor=layer;while(ancestor){if(ancestor.threeDLayer)return "Counter Rotation requires a 2D layer and 2D parents.";ancestor=ancestor.parent;}}
+    if(spec.twoDChain) {var ancestor=layer;while(ancestor){if(ancestor.threeDLayer)return "This preset requires a 2D layer and 2D parents.";ancestor=ancestor.parent;}}
     if(spec.textLayer && !layer.property("ADBE Text Properties")) return "Use Gradient Ramp on a text layer.";
     if(spec.unseparated && prop.isSeparationLeader && prop.dimensionsSeparated) return "Use unseparated Position.";
     var type=prop.propertyValueType;

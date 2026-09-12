@@ -1,11 +1,11 @@
-// Data version 13 migrates stock presets without resetting user libraries.
+// Data version 14 migrates stock presets without resetting user libraries.
 const LibraryManager = {
  data:null, fs:null, filePath:null, warning:'',
  clone(x){return JSON.parse(JSON.stringify(x));},
  validName(s){return typeof s==='string' && s.trim() && !['__proto__','constructor','prototype'].includes(s);},
  validate(d){
   if(!d || !d.categories || typeof d.categories!=='object' || Array.isArray(d.categories)) throw Error('Invalid library.');
-  if(Number(d.version)>13) throw Error('Library requires a newer Wrangle version.');
+  if(Number(d.version)>14) throw Error('Library requires a newer Wrangle version.');
   Object.keys(d.categories).forEach(c=>{
    if(!this.validName(c)||!Array.isArray(d.categories[c])) throw Error('Invalid category.');
    d.categories[c].forEach(i=>{if(!i||i.id==null||typeof i.name!=='string'||typeof i.code!=='string'||(i.controllers&&!Array.isArray(i.controllers))) throw Error('Invalid expression.');});
@@ -24,20 +24,20 @@ const LibraryManager = {
  },
  load(){
   const candidates=[];let invalid=false,futureVersion=false;
-  const read=text=>{if(!text)return;try{const parsed=JSON.parse(text);if(Number(parsed.version)>13){futureVersion=true;return;}candidates.push(this.validate(parsed));}catch(e){invalid=true;}};
+  const read=text=>{if(!text)return;try{const parsed=JSON.parse(text);if(Number(parsed.version)>14){futureVersion=true;return;}candidates.push(this.validate(parsed));}catch(e){invalid=true;}};
   if(this.fs&&this.filePath&&this.fs.existsSync(this.filePath)){try{read(this.fs.readFileSync(this.filePath,'utf8'));}catch(e){invalid=true;}}
   try{read(localStorage.getItem('wrangle_library'));}catch(e){this.warning='Browser backup unavailable.';}
   if(futureVersion)throw Error('Saved data requires a newer Wrangle version. Nothing was overwritten.');
   if(!candidates.length){
    if(invalid)throw Error('Cannot read saved library. Original data was left untouched; restore a backup.');
-   this.data={version:13,revision:0,categories:this.clone(defaultLibrary),icons:{}};this.save();return;
+   this.data={version:14,revision:0,categories:this.clone(defaultLibrary),icons:{}};this.save();return;
   }
   candidates.sort((a,b)=>(Number(b.revision)||0)-(Number(a.revision)||0));this.data=this.clone(candidates[0]);
   if(invalid)this.warning='Recovered a valid library copy. Check your saved backups.';
-  if(Number(this.data.version||0)<13){
+  if(Number(this.data.version||0)<14){
    const backup=JSON.stringify(this.data,null,2);
-   if(this.fs&&this.filePath)this.fs.writeFileSync(this.filePath+'.pre-v13-'+Date.now()+'.bak',backup,'utf8');
-   else localStorage.setItem('wrangle_library_pre_v13',backup);
+   if(this.fs&&this.filePath)this.fs.writeFileSync(this.filePath+'.pre-v14-'+Date.now()+'.bak',backup,'utf8');
+   else localStorage.setItem('wrangle_library_pre_v14',backup);
    this.data=this.migrate(this.data);this.save();
   } this.data.icons=this.data.icons||{};
  },
@@ -45,6 +45,7 @@ const LibraryManager = {
   const d=this.clone(input),originals={},current={};
   Object.keys(legacyLibrary).forEach(c=>legacyLibrary[c].forEach(x=>{originals[x.id]=[x];}));
   Object.keys(libraryV12).forEach(c=>libraryV12[c].forEach(x=>{(originals[x.id]||(originals[x.id]=[])).push(x);}));
+  Object.keys(libraryV13).forEach(c=>libraryV13[c].forEach(x=>{(originals[x.id]||(originals[x.id]=[])).push(x);}));
   Object.keys(defaultLibrary).forEach(c=>defaultLibrary[c].forEach(x=>{current[x.id]=x;}));
   Object.keys(d.categories).forEach(c=>{
    d.categories[c]=d.categories[c].reduce((items,i)=>{
@@ -56,10 +57,12 @@ const LibraryManager = {
    },[]);
   });
   // Add only newly introduced IDs; keep user deletions of older presets.
+  const available={};
+  [legacyLibrary].concat(Number(input.version)>=12?[libraryV12]:[]).concat(Number(input.version)>=13?[libraryV13]:[]).forEach(catalog=>Object.keys(catalog).forEach(c=>catalog[c].forEach(i=>{available[i.id]=true;})));
   const seen={};Object.keys(d.categories).forEach(c=>d.categories[c].forEach(i=>{seen[i.id]=true;}));
   Object.keys(defaultLibrary).forEach(c=>defaultLibrary[c].forEach(i=>{
-   if(!originals[i.id]&&!seen[i.id]){if(!d.categories[c])d.categories[c]=[];d.categories[c].push(this.clone(i));seen[i.id]=true;}
-  }));d.version=13;d.icons=d.icons||{};return d;
+   if(!available[i.id]&&!seen[i.id]){if(!d.categories[c])d.categories[c]=[];d.categories[c].push(this.clone(i));seen[i.id]=true;}
+  }));d.version=14;d.icons=d.icons||{};return d;
  },
  save(){
   this.data.revision=Math.max(Date.now(),Number(this.data.revision||0)+1);

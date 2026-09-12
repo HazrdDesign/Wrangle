@@ -312,6 +312,93 @@ const defaultLibrary = {
         }
       ],
       "description": "Fades the existing opacity at layer edges. Zero disables that fade; overlapping fades stay bounded."
+    },
+    {
+      "id": 211,
+      "name": "Random Reveal",
+      "target": "opacity",
+      "code": "// Apply to Opacity\n// Opacity. Animate Progress from 0 to 100 across selected/duplicated layers.\nseedRandom(Math.round(effect(\"Wrangle 211 - Seed\")(1)), true);\nvar threshold = random(0, 100);\nvar progress = Math.max(0, Math.min(100, effect(\"Wrangle 211 - Progress\")(1)));\nprogress >= 100 || (progress > 0 && progress >= threshold) ? value : 0;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "controllers": [
+        {
+          "name": "Wrangle 211 - Progress",
+          "label": "Progress",
+          "matchName": "ADBE Slider Control",
+          "value": 50
+        },
+        {
+          "name": "Wrangle 211 - Seed",
+          "label": "Seed",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        }
+      ],
+      "description": "Animate Progress 0–100 for a stable randomized reveal. Preserves the original opacity; 0 hides all, 100 reveals all."
+    },
+    {
+      "id": 212,
+      "name": "Random Fade In",
+      "target": "opacity",
+      "code": "// Apply to Opacity\n// Opacity. Delay is randomized per layer from its in-point.\nseedRandom(Math.round(effect(\"Wrangle 212 - Seed\")(1)), true);\nvar delay = random(0, Math.max(0, effect(\"Wrangle 212 - Maximum Delay\")(1)));\nvar duration = Math.max(0, effect(\"Wrangle 212 - Fade Seconds\")(1));\nvar elapsed = time - inPoint - delay;\nvar fade = duration === 0 ? (elapsed >= 0 ? 1 : 0) : Math.max(0, Math.min(1, elapsed / duration));\nvalue * fade;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "controllers": [
+        {
+          "name": "Wrangle 212 - Maximum Delay",
+          "label": "Maximum Delay",
+          "matchName": "ADBE Slider Control",
+          "value": 1
+        },
+        {
+          "name": "Wrangle 212 - Fade Seconds",
+          "label": "Fade Seconds",
+          "matchName": "ADBE Slider Control",
+          "value": 0.5
+        },
+        {
+          "name": "Wrangle 212 - Seed",
+          "label": "Seed",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        }
+      ],
+      "description": "Randomly staggers fade-ins without naming or linking layers. Delays and duration are seconds; animate Seed only if you want changing timing."
+    },
+    {
+      "id": 213,
+      "name": "Opacity Wave",
+      "target": "opacity",
+      "code": "// Apply to Opacity\n// Opacity. Frequency is cycles/second; phases are degrees.\nvar phase = effect(\"Wrangle 213 - Phase\")(1) + (index - 1) * effect(\"Wrangle 213 - Layer Phase\")(1);\nvar wave = (1 + Math.sin((time - inPoint) * effect(\"Wrangle 213 - Frequency\")(1) * Math.PI * 2 + phase * Math.PI / 180)) / 2;\nvar low = Math.max(0, Math.min(100, effect(\"Wrangle 213 - Minimum\")(1)));\nvar high = Math.max(0, Math.min(100, effect(\"Wrangle 213 - Maximum\")(1)));\nvar lo = Math.min(low, high), hi = Math.max(low, high);\nvalue * (lo + (hi - lo) * wave) / 100;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "controllers": [
+        {
+          "name": "Wrangle 213 - Frequency",
+          "label": "Frequency",
+          "matchName": "ADBE Slider Control",
+          "value": 1
+        },
+        {
+          "name": "Wrangle 213 - Minimum",
+          "label": "Minimum",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        },
+        {
+          "name": "Wrangle 213 - Maximum",
+          "label": "Maximum",
+          "matchName": "ADBE Slider Control",
+          "value": 100
+        },
+        {
+          "name": "Wrangle 213 - Phase",
+          "label": "Phase",
+          "matchName": "ADBE Angle Control",
+          "value": 0
+        },
+        {
+          "name": "Wrangle 213 - Layer Phase",
+          "label": "Layer Phase",
+          "matchName": "ADBE Angle Control",
+          "value": 30
+        }
+      ],
+      "description": "Smooth opacity pulses. Layer Phase offsets duplicated layers; limits are percentages of the existing opacity. Reordering layers changes their phase."
     }
   ],
   "Wiggle": [
@@ -617,6 +704,132 @@ const defaultLibrary = {
       ],
       "description": "Adds a decaying overshoot using incoming keyframe velocity. Hold keys or zero incoming velocity produce no bounce.",
       "requiresKeys": 2
+    },
+    {
+      "id": 410,
+      "name": "Constant Drift",
+      "target": "numeric",
+      "code": "// Apply to Numeric properties\n// Numeric properties: units per second, relative to the layer in-point.\n// Axis affects vector properties only. A missing Z axis leaves 2D values unchanged.\nvar speed = effect(\"Wrangle 410 - Speed\")(1);\nvar elapsed = time - inPoint - effect(\"Wrangle 410 - Delay Seconds\")(1);\nif (effect(\"Wrangle 410 - Hold Before Start\")(1) > 0) elapsed = Math.max(0, elapsed);\nvar offset = speed * elapsed;\nvar axis = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 410 - Axis\")(1))));\nvar result = value;\nif (typeof value === 'number') result += offset;\nelse { result = value.slice(0); for (var d = 0; d < result.length; d++) if (axis === 1 || d === axis - 2) result[d] += offset; }\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "controllers": [
+        {
+          "name": "Wrangle 410 - Speed",
+          "label": "Speed",
+          "matchName": "ADBE Slider Control",
+          "value": 50
+        },
+        {
+          "name": "Wrangle 410 - Axis",
+          "label": "Axis",
+          "matchName": "ADBE Dropdown Control",
+          "value": 1,
+          "options": [
+            "All",
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        {
+          "name": "Wrangle 410 - Delay Seconds",
+          "label": "Delay Seconds",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        },
+        {
+          "name": "Wrangle 410 - Hold Before Start",
+          "label": "Hold Before Start",
+          "matchName": "ADBE Checkbox Control",
+          "value": 1
+        }
+      ],
+      "description": "Continuous drift from the layer in-point. Speed uses property units/second; choose an axis for vectors."
+    },
+    {
+      "id": 411,
+      "name": "Random Position",
+      "target": "position",
+      "code": "// Apply to Position (2D / 3D)\n// Layer Position, unseparated. Adds stable offsets in parent space.\nvar spread = [Math.abs(effect(\"Wrangle 411 - X Spread\")(1)), Math.abs(effect(\"Wrangle 411 - Y Spread\")(1)), Math.abs(effect(\"Wrangle 411 - Z Spread\")(1))];\nseedRandom(Math.round(effect(\"Wrangle 411 - Seed\")(1)), true);\nvar result = value.slice(0);\nfor (var d = 0; d < result.length; d++) result[d] += random(-spread[d], spread[d]);\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "controllers": [
+        {
+          "name": "Wrangle 411 - X Spread",
+          "label": "X Spread",
+          "matchName": "ADBE Slider Control",
+          "value": 200
+        },
+        {
+          "name": "Wrangle 411 - Y Spread",
+          "label": "Y Spread",
+          "matchName": "ADBE Slider Control",
+          "value": 200
+        },
+        {
+          "name": "Wrangle 411 - Z Spread",
+          "label": "Z Spread",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        },
+        {
+          "name": "Wrangle 411 - Seed",
+          "label": "Seed",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        }
+      ],
+      "description": "Stable random offsets around each layer’s original Position. Spread is pixels per axis; Z applies only to 3D layers. AE seeds each layer independently."
+    },
+    {
+      "id": 412,
+      "name": "Maintain Scale When Parented",
+      "target": "scale",
+      "code": "// Apply to Scale\n// Layer Transform > Scale; compensates the immediate parent's scale.\n// Best with aligned axes or uniform parent scale. Does not remove shear or ancestor scaling.\n// Near-zero parent axes cannot be inverted: those axes keep their base scale.\nvar amount = Math.max(0, effect(\"Wrangle 412 - Scale Multiplier\")(1));\nvar result = value.slice(0);\nfor (var d = 0; d < result.length; d++) {\n var inherited = 100;\n if (hasParent && effect(\"Wrangle 412 - Compensate Parent\")(1) > 0) {\n  var parentAxes = parent.transform.scale.value;\n  if (d < parentAxes.length && Math.abs(parentAxes[d]) >= 0.01) inherited = parentAxes[d];\n }\n result[d] = value[d] * amount * 100 / inherited;\n}\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "controllers": [
+        {
+          "name": "Wrangle 412 - Compensate Parent",
+          "label": "Compensate Parent",
+          "matchName": "ADBE Checkbox Control",
+          "value": 1
+        },
+        {
+          "name": "Wrangle 412 - Scale Multiplier",
+          "label": "Scale Multiplier",
+          "matchName": "ADBE Slider Control",
+          "value": 1
+        }
+      ],
+      "description": "Compensates immediate parent scale; use uniform scaling or aligned axes. Handles unparented layers and zero scale safely. Does not remove shear or ancestor scaling.",
+      "targetSpec": {
+        "matchNames": [
+          "ADBE Scale"
+        ]
+      }
+    },
+    {
+      "id": 413,
+      "name": "Auto-Orient Along Path",
+      "target": "rotation",
+      "code": "// Apply to Rotation\n// Apply to 2D layer Rotation with animated, unseparated Position.\n// Disable AE's built-in Auto-Orient. Angle Offset 0 points the artwork's +X axis along motion.\nvar p = transform.position;\nvar window = Math.max(0.01, Math.min(120, effect(\"Wrangle 413 - Smoothing Frames\")(1))) * thisComp.frameDuration;\nvar sampleTime = time;\nif (p.numKeys >= 2) sampleTime = Math.max(p.key(1).time, Math.min(p.key(p.numKeys).time, sampleTime));\nvar before = p.valueAtTime(sampleTime - window);\nvar after = p.valueAtTime(sampleTime + window);\nvar dx = after[0] - before[0], dy = after[1] - before[1];\nvar result = value + effect(\"Wrangle 413 - Angle Offset\")(1);\nif (dx * dx + dy * dy > 0.00000001) result += Math.atan2(dy, dx) * 180 / Math.PI;\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://videolancer.net/expressions/\n//Expressions by Videolancer",
+      "controllers": [
+        {
+          "name": "Wrangle 413 - Smoothing Frames",
+          "label": "Smoothing Frames",
+          "matchName": "ADBE Slider Control",
+          "value": 3
+        },
+        {
+          "name": "Wrangle 413 - Angle Offset",
+          "label": "Angle Offset",
+          "matchName": "ADBE Angle Control",
+          "value": 0
+        }
+      ],
+      "description": "Follows Position motion with adjustable smoothing and angle offset. 2D only; turn off built-in Auto-Orient. Stationary segments use the original Rotation plus offset.",
+      "targetSpec": {
+        "matchNames": [
+          "ADBE Rotate Z"
+        ],
+        "twoDChain": true,
+        "motionPosition": true
+      }
     }
   ],
   "Utility": [],
