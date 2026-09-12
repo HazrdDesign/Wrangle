@@ -26,7 +26,10 @@ function applyAccent(color,save) {
     document.documentElement.style.setProperty('--accent-border','rgba('+rgb.join(',')+',.36)');
     const lum=rgb.map(v=>{v/=255;return v<=0.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
     document.documentElement.style.setProperty('--accent-ink',lum[0]*.2126+lum[1]*.7152+lum[2]*.0722>.179?'#151515':'#ffffff');
-    $('set-accent').value=color;$('accent-value').textContent=color.toUpperCase();
+    $('set-accent').value=color.toUpperCase();$('accent-value').textContent=color.toUpperCase();
+    $('accent-preview').style.backgroundColor=color;
+    ['r','g','b'].forEach((channel,i)=>{ $('accent-'+channel).value=rgb[i];$('accent-'+channel+'-value').textContent=rgb[i]; });
+    $('accent-error').textContent='';
     if(save)guard(()=>localStorage.setItem('wrangle_settings',JSON.stringify({accent:color})));
 }
 function initSettings() {
@@ -65,7 +68,7 @@ function bridge(functionName,args,callback) {
 }
 function applyItem(item,event) {
     const mode=event.ctrlKey||event.metaKey?'expression':event.altKey?'controllers':'both';
-    const spec=Object.assign({},targetTypes[item.target]||targetTypes.any,{requiresKeys:item.requiresKeys||0});
+    const spec=Object.assign({},targetTypes[item.target]||targetTypes.any,item.targetSpec||{},{requiresKeys:item.requiresKeys||0});
     setStatus('Applying '+item.name+'…',false);
     bridge('applyExpression',[item.code,item.controllers||[],spec,mode],res=>{
         const details=(res.errors||[]).concat(res.warnings||[]);
@@ -176,7 +179,7 @@ function saveExpression(event) {
             id:editingItem?editingItem.id:'user-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
             name,code,target,controllers:$('include-controllers').checked?capturedControllers:[]
         });
-        if(editingItem&&(code!==editingItem.code||target!==editingItem.target)){delete item.requiresKeys;delete item.description;}
+        if(editingItem&&(code!==editingItem.code||target!==editingItem.target)){delete item.targetSpec;delete item.requiresKeys;delete item.description;}
         LibraryManager.saveExpression(editingCat,editingItem?editingItem.id:null,cat,item);
         activeCat=cat;closeModal('expression-modal');render();setStatus('Expression saved.',false);
     },'expression-error');
@@ -205,7 +208,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     $('remove-selected').addEventListener('click',()=>{closeMenu();removeSelected();});
     $('open-settings').addEventListener('click',()=>openModal('settings-modal'));
     $('open-help').addEventListener('click',()=>openModal('help-modal'));
-    $('set-accent').addEventListener('input',e=>applyAccent(e.target.value,true));
+    $('set-accent').addEventListener('input',e=>{const hex=e.target.value.trim();if(/^#?[0-9a-f]{6}$/i.test(hex))applyAccent('#'+hex.replace('#',''),true);else $('accent-error').textContent='Enter six hex digits, for example #FF8033.';});
+    ['r','g','b'].forEach(channel=>$('accent-'+channel).addEventListener('input',()=>{
+        const hex=['r','g','b'].map(c=>('0'+Number($('accent-'+c).value).toString(16)).slice(-2)).join('');applyAccent('#'+hex,true);
+    }));
     $('reset-accent').addEventListener('click',()=>applyAccent(accentDefault,true));
     $('expression-form').addEventListener('submit',saveExpression);
     $('category-form').addEventListener('submit',saveCategory);

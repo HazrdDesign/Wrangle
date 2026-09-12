@@ -66,3 +66,12 @@ dt{color:var(--accent);font-weight:600;margin-top:12px}dd{margin:2px 0 0;color:v
 @media(max-height:420px){.header{padding-top:7px;padding-bottom:5px}#wrangle-logo{height:27px}.categories{padding-bottom:7px;max-height:21vh}.content-header{padding-top:9px}.dialog-header{padding-top:8px;padding-bottom:8px}}
 @media(prefers-reduced-motion:no-preference){button{transition:background .12s,border-color .12s}.expr-card{transition:background .12s,border-color .12s}}
 @media(min-width:640px){.expression-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));align-content:start;gap:8px}.expr-card{margin-bottom:0}.empty{grid-column:1/-1}}
+
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+.icon-btn svg{display:block;flex-shrink:0}
+.accent-row{flex-wrap:wrap;gap:8px}
+#accent-preview{flex:none;width:28px;height:28px;border:1px solid var(--line);border-radius:8px}
+.accent-row #set-accent{width:94px;margin:0;font:12px Consolas,monospace;padding:7px}
+#accent-value{display:none}
+.rgb-controls{margin-top:14px}.rgb-controls label{display:flex;justify-content:space-between}
+.rgb-controls input[type=range]{padding:0;width:100%;accent-color:var(--accent);height:22px;margin-bottom:12px}

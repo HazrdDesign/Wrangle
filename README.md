@@ -2,18 +2,15 @@
 
 One-click expressions with their controls. Select timeline properties, then click a library row.
 
-## 1.3.0 update
+## 1.4.0 update
 
-- Retires stock IDs **102, 103, 205, 206, 303, 401, 405, and 702**. Seventeen repaired presets remain.
-- Adds visible target labels (such as **Opacity · 1 control**) and host-side compatibility checks.
-- Initializes useful controller values and dropdown options. Reusing the same preset keeps existing controller values; bundled presets use distinct control names.
-- Captures current expression-control values, reports unsupported references, and restores previous expressions if application fails.
-- Uses a neutral charcoal interface with rounded rows and an orange accent. **More actions → Accent color** changes only the accent.
-- Makes dialogs scroll within narrow/short docks; keyboard focus and Escape are supported.
-- Migrates the existing library without resetting custom categories or edited expressions.
+- Ships 25 presets, with property comments and controller defaults for every expression.
+- Removes stock 101, 106, and 204; adds Typewriter with optional blinking cursor, axis-only wiggles, Auto Center Anchor Point, Counter Rotation, Inertial Bounce, Auto Fade In / Out, and Basic Wiggle.
+- Covers all four loop functions and all four modes, with keyframe-count or duration controls.
+- Fixes the accent picker with in-panel RGB sliders and hex entry; adds Rotation, Anchor Point, and Other targets; centers the add icon.
+- Preserves edited presets and existing controller values during upgrades.
 
-This update has automated/mock and browser validation. Download the signed Wrangle-v1.3.0.zxp from GitHub Releases. Live After Effects acceptance remains pending. The legacy Builds/Wrangle.zxp on main is not this release.
-
+Download the signed Wrangle-v1.4.0.zxp from GitHub Releases. 36 automated checks and browser checks passed; live After Effects acceptance remains pending. See [full 1.4 release notes](docs/UPDATE-1.4.md).
 ## Use
 
 - **Click:** expression and controllers, on compatible selected properties.
@@ -32,7 +29,7 @@ A controller already present with the same name and type is reused without reset
 Windows: `%APPDATA%/Hazrd/Wrangle/data.json`
 macOS: `~/Library/Application Support/Hazrd/Wrangle/data.json`
 
-Before upgrading an older library, Wrangle creates a timestamped pre-v12 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the eight requested stock IDs. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
+Before upgrading an older library, Wrangle creates a timestamped pre-v13 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the requested stock IDs while adding newly introduced presets. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
 
 Writes use a temporary file and rename. A revision number chooses the newest valid file/browser copy after a failed save. Errors appear in the panel. Recovering edits already lost by an earlier v11 migration requires an existing backup.
 
@@ -47,4 +44,3 @@ The panel can be served from `Extension Files/client` for visual testing; timeli
 See [release notes and acceptance checklist](docs/UPDATE-1.1.md) and [community research](docs/COMMUNITY-EXPRESSIONS.md).
 
 Created by Jose “Hazrd” Lopez.
-

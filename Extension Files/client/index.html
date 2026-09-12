@@ -10,7 +10,7 @@
                             d="M146.64,70.32c-.32,26.17-6.53,63.72-37.07,65.8,11.95-17.22,10.95-50.2-13.03-56.13-42.93-5.77-42.99,44.3-12,62.24C24.64,171.45-17.82,77.35,63.88,20.04L46.11,0c-95.05,74.66-25.9,202.27,52.38,148.69,43.28,12.22,65.25-37.98,74.27-71.67l-26.12-6.7ZM76.43,113.05c-5.38-14.04,8.42-26.65,21.43-18.63,10.32,9.61,6.63,28.47-2.09,38.3-8.46-4.02-15.89-11.3-19.34-19.67Z" />
                     </g>
                 </svg></div>
- <div class="header-actions"><button class="icon-btn" id="add-expression" title="Add expression" aria-label="Add expression">+</button>
+ <div class="header-actions"><button class="icon-btn" id="add-expression" title="Add expression" aria-label="Add expression"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
  <button class="icon-btn" id="open-menu" title="More actions" aria-label="More actions" aria-expanded="false">⋯</button></div></header>
  <nav class="categories" id="sidebar-nav" aria-label="Expression categories"></nav>
  <section class="content-area"><div class="content-header"><h1 id="cat-title">Library</h1><span id="item-count"></span></div>
@@ -40,7 +40,7 @@
 </section></div>
 <div class="dialog-overlay" id="settings-modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
  <header class="dialog-header"><h2 id="settings-title">Accent color</h2><button class="close-btn" data-close="settings-modal" aria-label="Close settings">×</button></header>
- <div class="dialog-body"><label for="set-accent">Choose your accent</label><div class="accent-row"><input type="color" id="set-accent" value="#ff8033"><span id="accent-value">#FF8033</span><button class="text-btn" id="reset-accent">Reset</button></div><p class="hint">Changes the highlights and buttons. The charcoal surfaces stay neutral.</p></div>
+ <div class="dialog-body"><label for="set-accent">Choose your accent</label><div class="accent-row"><span id="accent-preview" aria-hidden="true"></span><input type="text" id="set-accent" value="#FF8033" maxlength="7" spellcheck="false" aria-describedby="accent-error" aria-label="Accent hex color"><span id="accent-value">#FF8033</span><button class="text-btn" id="reset-accent">Reset</button></div><p class="form-error" id="accent-error" aria-live="polite"></p><div class="rgb-controls"><label for="accent-r">Red <output id="accent-r-value"></output></label><input type="range" id="accent-r" min="0" max="255" step="1" value="255"><label for="accent-g">Green <output id="accent-g-value"></output></label><input type="range" id="accent-g" min="0" max="255" step="1" value="128"><label for="accent-b">Blue <output id="accent-b-value"></output></label><input type="range" id="accent-b" min="0" max="255" step="1" value="51"></div><p class="hint">Changes the highlights and buttons. The charcoal surfaces stay neutral.</p></div>
 </section></div>
 <div class="dialog-overlay" id="help-modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
  <header class="dialog-header"><h2 id="help-title">Using Wrangle</h2><button class="close-btn" data-close="help-modal" aria-label="Close help">×</button></header>
