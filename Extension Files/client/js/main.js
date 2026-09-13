@@ -76,6 +76,7 @@ function applyItem(item,event) {
         if(!res.ok)message=(res.errors||[])[0]||'Expression could not be applied.';
         else if(mode==='controllers')message=res.controllers?'Added '+res.controllers+' controller'+(res.controllers===1?'':'s')+'.':'Controllers already exist; their values were kept.';
         else message='Applied to '+res.applied+' propert'+(res.applied===1?'y':'ies')+(res.skipped?' · '+res.skipped+' skipped':'')+'.';
+        if(res.ok&&item.hint&&mode!=='controllers')message+=' '+item.hint+'.';
         setStatus(message,!res.ok,details);
     });
 }
@@ -88,7 +89,7 @@ function make(tag,className,text) {const node=document.createElement(tag);if(cla
 function render() {
     const cats=LibraryManager.getCategories();
     if(!cats.includes(activeCat))activeCat=cats[0]||null;
-    renderSidebar();renderContent();$('edit-category').disabled=!activeCat;
+    renderSidebar();renderContent();$('edit-category').disabled=!activeCat||activeCat==='Essentials';
 }
 function reorderEvents(node,kind,index) {
     node.draggable=true;
@@ -111,6 +112,7 @@ function renderSidebar() {
     $('sidebar-nav').textContent='';
     LibraryManager.getCategories().forEach((cat,index)=>{
         const b=make('button','nav-item'+(cat===activeCat?' active':''),cat);
+        if(cat==='Essentials')b.title='Shortcuts to frequently used expressions. Edits update the original preset.';
         b.setAttribute('aria-pressed',String(cat===activeCat));
         b.addEventListener('click',()=>{activeCat=cat;render();});
         reorderEvents(b,'category',index);$('sidebar-nav').appendChild(b);
@@ -129,6 +131,7 @@ function renderContent() {
         const count=(item.controllers||[]).length;
         apply.appendChild(make('span','expr-target',label+(count?' · '+count+' control'+(count===1?'':'s'):'')));
         if(item.requiresKeys)apply.appendChild(make('span','requirement','Requires '+item.requiresKeys+'+ keyframes'));
+        if(item.hint)apply.appendChild(make('span','requirement',item.hint));
         if(item.description)apply.title=item.description;
         apply.setAttribute('aria-label','Apply '+item.name+' to '+label);
         apply.addEventListener('click',e=>applyItem(item,e));row.appendChild(apply);
@@ -145,13 +148,13 @@ function populateSelect(id,options,selected) {
     options.forEach(x=>{const option=make('option','',x.label);option.value=x.value;option.selected=x.value===selected;$(id).appendChild(option);});
 }
 function openEditor(item,data) {
-    editingItem=item?LibraryManager.clone(item):null;editingCat=activeCat;
+    editingItem=item?LibraryManager.clone(item):null;editingCat=item?LibraryManager.sourceCategory(activeCat,item.id):activeCat;
     data=data||{};capturedControllers=LibraryManager.clone(item?item.controllers||[]:data.controllers||[]);
     captureWarnings=data.warnings||[];
     $('expression-title').textContent=item?'Edit expression':'Add expression';
     $('inp-name').value=item?item.name:'';$('inp-code').value=item?item.code:data.code||'';
     const cats=LibraryManager.getCategories();if(!cats.includes('Custom'))cats.push('Custom');
-    populateSelect('inp-cat',cats.map(c=>({value:c,label:c})),activeCat||'Custom');
+    populateSelect('inp-cat',cats.map(c=>({value:c,label:c})),editingCat||'Custom');
     let target=item?item.target:'any';
     if(!item&&data.matchName)Object.keys(targetTypes).some(key=>{
         if((targetTypes[key].matchNames||[]).includes(data.matchName)){target=key;return true;}return false;
@@ -179,7 +182,7 @@ function saveExpression(event) {
             id:editingItem?editingItem.id:'user-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
             name,code,target,controllers:$('include-controllers').checked?capturedControllers:[]
         });
-        if(editingItem&&(code!==editingItem.code||target!==editingItem.target)){delete item.targetSpec;delete item.requiresKeys;delete item.description;}
+        if(editingItem&&(code!==editingItem.code||target!==editingItem.target)){delete item.targetSpec;delete item.requiresKeys;delete item.description;delete item.hint;}
         LibraryManager.saveExpression(editingCat,editingItem?editingItem.id:null,cat,item);
         activeCat=cat;closeModal('expression-modal');render();setStatus('Expression saved.',false);
     },'expression-error');

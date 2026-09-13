@@ -2,20 +2,13 @@
 
 One-click expressions with their controls. Select timeline properties, then click a library row.
 
-## 1.5.0 update
+## 1.6.0 update
 
-Seven additions bring the library to 32 presets: Constant Drift, Random Position, Maintain Scale When Parented, Auto-Orient Along Path, Random Reveal, Random Fade In, and Opacity Wave. Each includes controls, property comments, source links, and author attribution. NoSleepCreative is credited for six adaptations; Auto-Orient credits its original author, Videolancer.
+Fixes Typewriter's illegal dropdown labels, consolidates Auto Center Anchor Point in Essentials with controls, upgrades Posterize + Wiggle with controls, restores Color, and removes Inertial Bounce. Adds the 17 approved non-bounce patterns from the supplied one-click document, with property targets, purpose comments and controls. Essentials references presets without duplicating them.
 
-[Full 1.5 notes and limitations](docs/UPDATE-1.5.md). Download the signed Wrangle-v1.5.0.zxp from GitHub Releases. 46 automated checks passed; live After Effects testing remains pending.
-## 1.4.0 update
+The default catalog contains 40 unique presets. Existing libraries preserve user edits and deletions. Loop In variants run before the first keyframe; the panel now makes that timing explicit.
 
-- Ships 25 presets, with property comments and controller defaults for every expression.
-- Removes stock 101, 106, and 204; adds Typewriter with optional blinking cursor, axis-only wiggles, Auto Center Anchor Point, Counter Rotation, Inertial Bounce, Auto Fade In / Out, and Basic Wiggle.
-- Covers all four loop functions and all four modes, with keyframe-count or duration controls.
-- Fixes the accent picker with in-panel RGB sliders and hex entry; adds Rotation, Anchor Point, and Other targets; centers the add icon.
-- Preserves edited presets and existing controller values during upgrades.
-
-Download the signed Wrangle-v1.4.0.zxp from GitHub Releases. 36 automated checks and browser checks passed; live After Effects acceptance remains pending. See [full 1.4 release notes](docs/UPDATE-1.4.md).
+[Full update notes](docs/UPDATE-1.6.md). Download Wrangle-v1.6.0.zxp from GitHub Releases. 47 automated checks and browser checks passed. After Effects testing is left to the user.
 ## Use
 
 - **Click:** expression and controllers, on compatible selected properties.
@@ -34,7 +27,7 @@ A controller already present with the same name and type is reused without reset
 Windows: `%APPDATA%/Hazrd/Wrangle/data.json`
 macOS: `~/Library/Application Support/Hazrd/Wrangle/data.json`
 
-Before upgrading an older library, Wrangle creates a timestamped pre-v14 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the requested stock IDs while adding newly introduced presets. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
+Before upgrading an older library, Wrangle creates a timestamped pre-v15 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the requested stock IDs while adding newly introduced presets. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
 
 Writes use a temporary file and rename. A revision number chooses the newest valid file/browser copy after a failed save. Errors appear in the panel. Recovering edits already lost by an earlier v11 migration requires an existing backup.
 

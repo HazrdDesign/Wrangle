@@ -64,6 +64,17 @@ function wrangleEffects(layer) {
     if(!group) throw Error("This layer cannot contain expression controls.");
     return group;
 }
+function wrangleValidateControls(controls) {
+    for(var i=0;i<controls.length;i++) {
+        var ctrl=controls[i];
+        if(ctrl && ctrl.matchName==="ADBE Dropdown Control" && ctrl.options) {
+            if(!ctrl.options.length) throw Error("Dropdown options cannot be empty.");
+            for(var j=0;j<ctrl.options.length;j++) {
+                if(typeof ctrl.options[j]!=="string" || !ctrl.options[j].replace(/\s/g,"") || ctrl.options[j].indexOf("|")!==-1) throw Error("Dropdown item names must be nonempty and cannot contain |. Use descriptive labels such as Vertical Bar.");
+            }
+        }
+    }
+}
 function wrangleSetupControls(layer,controls,code,created,result) {
     for(var c=0;c<controls.length;c++) {
         var ctrl=controls[c];
@@ -102,6 +113,7 @@ function applyExpression(code,controllers,spec,mode) {
         var comp=wrangleComp(), layers=comp.selectedLayers;
         if(!layers.length) throw Error("Select a layer and property in After Effects.");
         controllers=controllers||[]; mode=mode||"both";
+        if(mode!=="expression")wrangleValidateControls(controllers);
         if(mode!=="controllers" && !code) throw Error("This expression is empty.");
         if(mode==="controllers" && !controllers.length) throw Error("This preset has no controllers.");
         // Snapshot paths before adding any effects, which invalidates indexed-group references.

@@ -6,8 +6,8 @@ function test(name,fn){try{fn();passed++;results.push({name,pass:true});console.
 function library(saved){
  const store={};if(saved)store.wrangle_library=JSON.stringify(saved);
  const c=vm.createContext({console,localStorage:{getItem:k=>store[k]||null,setItem:(k,v)=>{store[k]=v}}});
- ['legacy-library.js','presets.js','library.js'].forEach(f=>vm.runInContext(read('client/js/'+f),c));
- vm.runInContext('this.manager=LibraryManager;this.presets=defaultLibrary;this.legacy=legacyLibrary;this.previous=libraryV12;this.v14=libraryV13;this.targets=targetTypes;',c);
+ ['legacy-library.js','presets.js','review-migrations.js','library.js'].forEach(f=>vm.runInContext(read('client/js/'+f),c));
+ vm.runInContext('this.manager=LibraryManager;this.presets=defaultLibrary;this.legacy=legacyLibrary;this.previous=libraryV12;this.v14=libraryV13;this.v15=libraryV14;this.repairs=reviewRepairs;this.targets=targetTypes;',c);
  c.store=store;return c;
 }
 function runtime(){
@@ -17,8 +17,8 @@ function runtime(){
 }
 const c=library();c.manager.load();const items=Object.values(c.presets).flat();
 const byId=id=>items.find(x=>x.id===id);
-test('Retired presets are absent and 32 presets ship',()=>{
- assert.equal(items.length,32);
+test('Retired presets are absent and 40 presets ship',()=>{
+ assert.equal(items.length,40);
  [101,102,103,106,204,205,206,303,401,405,702].forEach(id=>assert(!byId(id)));
 });
 test('Every preset has valid target metadata and complete controllers',()=>{
@@ -32,23 +32,23 @@ test('Migration preserves custom categories, modified entries and deletions',()=
  const source={version:10,categories:{Client:[{id:900,name:'mine',code:'value'}],Text:[JSON.parse(JSON.stringify(c.legacy.Text[0])),{...c.legacy.Text[1],code:'my custom code'}]},icons:{Client:'X'}};
  const d=c.manager.migrate(source);
  assert.equal(d.categories.Client[0].id,900);assert.equal(d.categories.Text[0].code,'my custom code');assert.equal(d.categories.Text.length,2);
- assert.equal(d.categories.Text[1].id,107);assert(d.categories.Wiggle.every(i=>[305,306,307].includes(i.id)));assert.equal(d.icons.Client,'X');
+ assert.equal(d.categories.Text[1].id,107);assert(!d.categories.Wiggle.some(i=>i.id===304));assert.equal(d.icons.Client,'X');
 });
 test('Migration retires stock entries and backs up original',()=>{
  const m=library({version:11,categories:c.legacy,icons:{}});m.manager.load();
- assert.equal(Object.values(m.manager.data.categories).flat().length,32);assert(m.store.wrangle_library_pre_v14);
+ assert.equal(Object.values(m.manager.data.categories).flat().length,40);assert(m.store.wrangle_library_pre_v15);
 });
 test('Newer backup wins over stale disk file',()=>{
- const m=library({version:14,revision:20,categories:{Custom:[{id:1,name:'new',code:'value'}]},icons:{}});
- m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:14,revision:10,categories:{Custom:[]},icons:{}})};
+ const m=library({version:15,revision:20,categories:{Custom:[{id:1,name:'new',code:'value'}]},icons:{}});
+ m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:15,revision:10,categories:{Custom:[]},icons:{}})};
  m.manager.filePath='mock';m.manager.load();assert.equal(m.manager.getItems('Custom').length,1);
 });
 test('Invalid data is never reset',()=>{
  const m=library();m.store.wrangle_library='{';assert.throws(()=>m.manager.load());assert.equal(m.store.wrangle_library,'{');
 });
 test('Future-version file is never replaced by an older backup',()=>{
- const m=library({version:14,revision:1,categories:{Custom:[]},icons:{}});
- m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:15,categories:{Custom:[]}})};
+ const m=library({version:15,revision:1,categories:{Custom:[]},icons:{}});
+ m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:16,categories:{Custom:[]}})};
  m.manager.filePath='mock';assert.throws(()=>m.manager.load(),/newer Wrangle/);
 });
 test('Failed writes roll back the in-memory edit',()=>{
@@ -82,7 +82,7 @@ test('Opacity rejects Position before any mutation',()=>{
 test('Explicit controllers-only mode does not require a compatible property',()=>{
  const h=runtime();vm.runInContext('var layer=makeLayer("L",[{matchName:"ADBE Position",type:3}]);',h);
  const r=JSON.parse(h.applyExpression(byId(302).code,byId(302).controllers,c.targets.opacity,'controllers'));
- assert(r.ok);assert.equal(r.applied,0);assert.equal(r.controllers,1);assert.equal(h.layer.selectedProperties[0].expression,'');
+ assert(r.ok);assert.equal(r.applied,0);assert.equal(r.controllers,3);assert.equal(h.layer.selectedProperties[0].expression,'');
 });
 test('Empty first layer does not abort later targets',()=>{
  const h=runtime();vm.runInContext('makeLayer("Empty",[]);var layer=makeLayer("Valid",[{matchName:"ADBE Opacity"}]);',h);
@@ -94,7 +94,7 @@ test('New controls get defaults; reused controls keep values',()=>{
  assert(r.ok);assert.equal(h.layer.effects[0].property(1).value,12);
  h.layer.effects[0].property(1).setValue(7);
  r=JSON.parse(h.applyExpression(p.code,p.controllers,c.targets.opacity,'both'));
- assert.equal(h.layer.effects.length,1);assert.equal(h.layer.effects[0].property(1).value,7);
+ assert.equal(h.layer.effects.length,3);assert.equal(h.layer.effects[0].property(1).value,7);
 });
 test('Evaluation failure restores old expression and removes added controls',()=>{
  const h=runtime();vm.runInContext('var layer=makeLayer("L",[{matchName:"ADBE Opacity"}]);layer.selectedProperties[0].expression="value";',h);
@@ -137,7 +137,7 @@ test('Loop wiggle remains finite and joins at its seam',()=>{
 });
 test('Orbit preserves Z; Random Scale is uniform in 3D',()=>{
  const p=evaluate(406,{Speed:.25,Radius:100},{value:[10,20,30]});assert.equal(p[2],30);assert(Math.abs(p[1]-120)<1e-8);
- const s=evaluate(402,{Minimum:50,Maximum:150,Seed:0},{value:[100,100,100],index:1,seedRandom(){},random:()=>70});assert.deepEqual(Array.from(s),[70,70,70]);
+ const s=evaluate(402,{Min:50,Max:150},{value:[100,100,100],index:1,seedRandom(){},random:()=>70});assert.deepEqual(Array.from(s),[70,70,70]);
 });
 test('Color presets preserve alpha and derive original hue',()=>{
  const random=evaluate(602,{'Changes Per Second':1,Seed:0}, {value:[.2,.3,.4,.6],seedRandom(){},random:()=>.5});assert.deepEqual(Array.from(random),[.5,.5,.5,.6]);
@@ -145,7 +145,7 @@ test('Color presets preserve alpha and derive original hue',()=>{
  assert.deepEqual(Array.from(pulse),[.2,.5,.3,.6]);
 });
 test('All scripts parse',()=>{
- ['client/js/main.js','client/js/library.js','client/js/presets.js','client/js/legacy-library.js','host/index.jsx'].forEach(f=>new vm.Script(read(f)));
+ ['client/js/main.js','client/js/library.js','client/js/presets.js','client/js/legacy-library.js','client/js/review-migrations.js','host/index.jsx'].forEach(f=>new vm.Script(read(f)));
 });
 
 test('Upgrade from v1.3 removes stock, preserves moved edits and deletions, adds new IDs once',()=>{
@@ -156,7 +156,7 @@ test('Upgrade from v1.3 removes stock, preserves moved edits and deletions, adds
  const all=Object.values(m.manager.data.categories).flat();
  assert(!all.some(i=>i.id===101||i.id===204||i.id===104));assert.equal(m.manager.data.categories.Client[0].code,modified.code);
  assert.equal(all.filter(i=>i.id===107).length,1);assert.equal(all.find(i=>i.id===201).controllers.length,2);
- assert(m.store.wrangle_library_pre_v14);m.manager.load();assert.equal(Object.values(m.manager.data.categories).flat().filter(i=>i.id===107).length,1);
+ assert(m.store.wrangle_library_pre_v15);m.manager.load();assert.equal(Object.values(m.manager.data.categories).flat().filter(i=>i.id===107).length,1);
 });
 test('Every preset declares its property and has useful complete controllers',()=>{
  items.forEach(i=>{assert(i.code.startsWith('// Apply to '));assert(i.controllers.length>0);});
@@ -206,83 +206,93 @@ test('Auto fade respects in/out points, zero durations, animated base and overla
  assert.equal(run(2),0);assert.equal(run(2.5),40);assert.equal(run(4),80);assert.equal(run(5.5),40);assert.equal(run(6),0);
  assert.equal(run(2,0,0),80);assert.equal(run(6,0,0),0);assert.equal(run(4,8,8),20);
 });
-test('Inertial bounce uses incoming velocity and stays unchanged before keys',()=>{
- const opts={numKeys:2,nearestKey:()=>({index:1}),key:()=>({time:1}),velocityAtTime:()=>100};
- const v={Amplitude:.05,Frequency:3,Decay:5};
- assert.equal(evaluate(409,v,{...opts,time:.5,value:20}),20);
- const result=evaluate(409,v,{...opts,time:1.1,value:20});assert(result>20&&Number.isFinite(result));
- const vector=evaluate(409,v,{...opts,time:1.1,value:vm.runInNewContext('[10,20,30]'),velocityAtTime:()=>[100,0,-100]});
- // Evaluate arrays inside the same VM realm, as AE does.
- const p=byId(409);const script='var value=[10,20,30];'+p.code;
- const arr=vm.runInNewContext(script,{...opts,time:1.1,thisComp:{frameDuration:1/30},effect:n=>()=>v[n.split(' - ')[1]],velocityAtTime:()=>[100,0,-100]});
- assert(arr[0]>10);assert.equal(arr[1],20);assert(arr[2]<30);
-});
 
 
-test('Seven new presets carry source URLs and correct final author credits',()=>{
- const added=items.filter(i=>[410,411,412,413,211,212,213].includes(i.id));assert.equal(added.length,7);
- added.forEach(i=>{assert(i.code.includes('// Source: https://'));assert(i.code.endsWith(i.id===413?'//Expressions by Videolancer':'//Expressions by Desmon Du/NoSleepCreative'));});
+
+
+
+
+
+
+
+
+
+
+
+
+
+test('Retired research batch and Bounce are absent; document additions have purpose and source',()=>{
+ [409,410,411,412,413,211,212,213].forEach(id=>assert(!byId(id)));
+ [420,421,422,220,221,222,423,424,425,426,801,802,803,320,321,322,302,402,403].forEach(id=>{assert(byId(id).code.includes('// Purpose:'));assert(byId(id).code.includes('Wrangle_One_Click_Expression_Presets.md'));assert(!byId(id).code.includes('Wrangle by'));});
 });
-test('Upgrade from 1.4 preserves deleted/edited presets and adds seven once',()=>{
- const old=JSON.parse(JSON.stringify(c.v14));old.Text=old.Text.filter(i=>i.id!==107);
- const changed=old.Transform.find(i=>i.id===407);changed.code+='\n// client edit';
+test('Typewriter dropdown uses legal labels; invalid saved dropdown fails before controls',()=>{
+ assert.deepEqual(Array.from(byId(107).controllers.find(i=>i.label==='Cursor Style').options),['Vertical Bar','Underscore']);
+ const h=runtime();vm.runInContext('var layer=makeLayer("Text",[{matchName:"ADBE Text Document"}]);',h);
+ const good=JSON.parse(h.applyExpression(byId(107).code,byId(107).controllers,c.targets.text,'both'));assert(good.ok);
+ const broken=[{name:'bad',matchName:'ADBE Dropdown Control',value:1,options:['|','_']}];
+ const before=h.layer.effects.length;assert(!JSON.parse(h.applyExpression('value',broken,c.targets.text,'both')).ok);assert.equal(h.layer.effects.length,before);
+});
+test('Installed-style library repairs anchor, posterized wiggle, cursor; restores Color without duplicates',()=>{
+ const old=JSON.parse(JSON.stringify(c.v14));
+ old.Essentials=[JSON.parse(JSON.stringify(c.repairs[0].original))];old.Wiggle.push(JSON.parse(JSON.stringify(c.repairs[1].original)));old.Text.push(JSON.parse(JSON.stringify(c.repairs[2].original)));delete old.Color;
  const m=library({version:13,categories:old,icons:{}});m.manager.load();
- const all=Object.values(m.manager.data.categories).flat();assert.equal(all.length,31);assert(!all.some(i=>i.id===107));assert.equal(all.find(i=>i.id===407).code,changed.code);
- assert(m.store.wrangle_library_pre_v14);m.manager.load();assert.equal(Object.values(m.manager.data.categories).flat().length,31);
+ const all=Object.values(m.manager.data.categories).flat();
+ assert.equal(all.filter(i=>i.name==='Auto Center Anchor Point').length,1);assert.equal(m.manager.data.categories.Essentials[0].id,5);assert.equal(m.manager.data.categories.Essentials[0].target,'anchor');assert.equal(m.manager.data.categories.Essentials[0].controllers.length,1);
+ assert.equal(all.filter(i=>i.name==='Posterize + Wiggle').length,1);const wig=all.find(i=>i.id===1776791506731);assert.deepEqual(Array.from(wig.controllers,x=>x.value),[15,15,5]);
+ assert.equal(all.filter(i=>i.name==='Typewriter').length,1);assert.equal(m.manager.getItems('Color').length,3);assert(!all.some(i=>i.id===409));
+ const count=all.length;m.manager.load();assert.equal(Object.values(m.manager.data.categories).flat().length,count);
 });
-test('Drift handles delay, negative speeds, vectors and absent Z',()=>{
- const controls={Speed:-10,'Delay Seconds':1,'Hold Before Start':1,Axis:3};
- assert.equal(evaluate(410,controls,{time:2,inPoint:2,value:5}),5);
- assert.deepEqual(Array.from(evaluate(410,controls,{time:5,inPoint:2,value:[100,200,300]})),[100,180,300]);
- assert.deepEqual(Array.from(evaluate(410,{...controls,Axis:4},{time:5,inPoint:2,value:[100,200]})),[100,200]);
- assert.equal(evaluate(410,{...controls,'Hold Before Start':0},{time:2,inPoint:2,value:5}),15);
+test('Migration keeps edited custom copies and rolls back only unchanged unapproved research presets',()=>{
+ const old=JSON.parse(JSON.stringify(c.v15));old.Transform.find(i=>i.id===410).code+='\n// personal edit';
+ const anchor=JSON.parse(JSON.stringify(c.repairs[0].original));anchor.code+='\n// personal edit';old.Essentials=[anchor];
+ const m=library({version:14,categories:old,icons:{}});m.manager.load();const all=Object.values(m.manager.data.categories).flat();
+ assert(all.some(i=>i.id===410));assert(!all.some(i=>i.id===413));assert(all.some(i=>i.id===5&&i.code.endsWith('// personal edit')));
 });
-test('Random Position preserves dimensions and respects axis spread and seed',()=>{
- let seed;const controls={'X Spread':20,'Y Spread':-10,'Z Spread':0,Seed:7};
- const opts={seedRandom:n=>{seed=n;},random:(lo,hi)=>lo,value:[100,200,300]};
- assert.deepEqual(Array.from(evaluate(411,controls,opts)),[80,190,300]);assert.equal(seed,7);
- assert.equal(evaluate(411,controls,{...opts,value:[10,20]}).length,2);
+test('Essentials are references: edit, reorder, move and delete never duplicate canonical presets',()=>{
+ const m=library();m.manager.load();const before=Object.values(m.manager.data.categories).flat().length;
+ const list=m.manager.getItems('Essentials');assert(list.some(i=>i.id===801));assert.equal(m.manager.sourceCategory('Essentials',801),'Utility');
+ m.manager.reorderExpression('Essentials',0,list.length-1);assert.equal(Object.values(m.manager.data.categories).flat().length,before);
+ const q=m.manager.getItems('Essentials').find(i=>i.id===801);m.manager.saveExpression('Essentials',801,'Utility',{...q,name:'Edited Quantize'});assert.equal(m.manager.getItems('Utility').find(i=>i.id===801).name,'Edited Quantize');
+ const anchor=m.manager.getItems('Essentials').find(i=>i.id===407);m.manager.saveExpression('Essentials',407,'Essentials',{...anchor,name:'Anchor edited'});assert.equal(m.manager.data.categories.Essentials.length,1);
+ m.manager.removeExpression('Essentials',801);assert(!m.manager.getItems('Utility').some(i=>i.id===801));assert.equal(Object.values(m.manager.data.categories).flat().length,before-1);
+ assert.throws(()=>m.manager.renameCategory('Essentials','Favorites',''));
 });
-test('Parent scale handles no parent, zero/negative scales, dimensions and bypass',()=>{
- const controls={'Scale Multiplier':1,'Compensate Parent':1};
- const opts={value:[100,100,100],hasParent:true,parent:{transform:{scale:{value:[200,0,-50]}}}};
- assert.deepEqual(Array.from(evaluate(412,controls,opts)),[50,100,-200]);
- assert.deepEqual(Array.from(evaluate(412,controls,{...opts,hasParent:false})),[100,100,100]);
- assert.deepEqual(Array.from(evaluate(412,{...controls,'Compensate Parent':0,'Scale Multiplier':2},opts)),[200,200,200]);
- assert.deepEqual(Array.from(evaluate(412,controls,{...opts,parent:{transform:{scale:{value:[200,200]}}}})),[50,50,100]);
+test('Random transforms preserve proportional scale and unused Position axes',()=>{
+ const env={index:2,seedRandom(){},random:(a,b)=>(a+b)/2};
+ assert.deepEqual(Array.from(evaluate(402,{Min:50,Max:50},{...env,value:[200,100,50]})),[100,50,25]);
+ assert.deepEqual(Array.from(evaluate(421,{'X Amount':20,'Y Amount':30},{...env,value:[10,20,30],random:(a,b)=>b})),[30,50,30]);
+ assert.equal(evaluate(420,{Amount:30},{...env,value:10,random:(a,b)=>b}),40);
+ assert.equal(evaluate(422,{Min:120,Max:-20},{...env}),50);
 });
-test('Random Reveal preserves opacity and guarantees both progress endpoints',()=>{
- const opts={value:63,seedRandom(){},random:()=>50};
- for(const progress of [-5,0,49])assert.equal(evaluate(211,{Progress:progress,Seed:0},opts),0);
- for(const progress of [50,100,150])assert.equal(evaluate(211,{Progress:progress,Seed:0},opts),63);
- assert.equal(evaluate(211,{Progress:0,Seed:0},{...opts,random:()=>0}),0);
+test('Timing presets sample own keyframes with predictable delays',()=>{
+ assert.equal(evaluate(220,{'Max Delay':2},{time:10,index:3,seedRandom(){},random:()=>1.5,valueAtTime:t=>t}),8.5);
+ assert.equal(evaluate(221,{Delay:.2},{time:10,index:3,valueAtTime:t=>t}),9.6);
+ assert.equal(evaluate(222,{'Keyframe Count':99},{numKeys:4,loopOut:(mode,n)=>mode+':'+n}),'offset:3');
 });
-test('Random Fade In respects per-layer start and handles zero duration',()=>{
- const controls={'Maximum Delay':1,'Fade Seconds':2,Seed:0};
- const opts={value:80,inPoint:5,seedRandom(){},random:()=>1};
- assert.equal(evaluate(212,controls,{...opts,time:5}),0);assert.equal(evaluate(212,controls,{...opts,time:7}),40);assert.equal(evaluate(212,controls,{...opts,time:9}),80);
- assert.equal(evaluate(212,{...controls,'Fade Seconds':0},{...opts,time:6}),80);
+test('Alternating and progressive variants honor dimensions and property units',()=>{
+ assert.equal(evaluate(423,{Amount:10},{index:1,value:20}),10);
+ assert.deepEqual(Array.from(evaluate(423,{Amount:10},{index:2,value:[1,2,3]})),[11,2,3]);
+ assert.deepEqual(Array.from(evaluate(424,{'X Step':10,'Y Step':5},{index:3,value:[1,2,3]})),[21,12,3]);
+ assert.equal(evaluate(425,{Step:15},{index:3,value:10}),40);
+ assert.deepEqual(Array.from(evaluate(426,{Step:10},{index:3,value:[100,50,25]})),[120,60,30]);
 });
-test('Opacity Wave bounds output and offsets successive layers',()=>{
- const controls={Frequency:1,Minimum:20,Maximum:80,Phase:0,'Layer Phase':90};
- assert.equal(evaluate(213,controls,{value:50,index:1,time:0}),25);
- assert.equal(evaluate(213,controls,{value:50,index:2,time:0}),40);
- assert.equal(evaluate(213,{...controls,Minimum:80,Maximum:20},{value:50,index:2,time:0}),40);
+test('Quantize, clamp and hold handle scalar/vector inputs and reversed or zero controls',()=>{
+ assert.deepEqual(Array.from(evaluate(801,{'Step Size':10},{value:[14,16,-16]})),[10,20,-20]);
+ assert(Number.isFinite(evaluate(801,{'Step Size':0},{value:3})));
+ assert.deepEqual(Array.from(evaluate(802,{Min:100,Max:0},{value:[-10,50,200]})),[0,50,100]);
+ let seed;const v=evaluate(803,{Rate:0,Min:20,Max:10},{value:[1,2,3],index:2,seedRandom:n=>{seed=n;},random:(lo,hi)=>lo});assert.deepEqual(Array.from(v),[10,10,10]);assert.equal(seed,2000);
 });
-test('Auto-Orient follows cardinal directions, clamps ends, and handles static Position',()=>{
- const controls={'Smoothing Frames':3,'Angle Offset':10};
- const motion=(x,y)=>({numKeys:2,key:n=>({time:n-1}),valueAtTime:t=>[x*Math.max(0,Math.min(1,t)),y*Math.max(0,Math.min(1,t))]});
- const run=(p,time=.5)=>evaluate(413,controls,{value:0,time,transform:{position:p}});
- assert.equal(run(motion(100,0)),10);assert.equal(run(motion(0,100)),100);assert.equal(run(motion(0,-100)),-80);
- assert.equal(run(motion(100,0),-10),10);assert.equal(run(motion(100,0),10),10);
- assert.equal(run({numKeys:0,valueAtTime:()=>[10,10]}),10);
- assert(Number.isFinite(evaluate(413,{'Smoothing Frames':0,'Angle Offset':0},{value:0,transform:{position:motion(100,0)}})));
+test('Oscillators support negative speed and axis selection; organic drift preserves Z',()=>{
+ assert.deepEqual(Array.from(evaluate(320,{Speed:1,Amount:10,Axis:2},{time:.25,value:[1,2,3]})),[11,2,3]);
+ const ping=evaluate(321,{Speed:-1,Amount:10,Axis:1},{time:.5,value:20});assert.equal(ping,20);
+ const drift=evaluate(322,{Speed:.5,Amount:20},{value:[1,2,3],index:2,seedRandom(){},random:()=>0});assert.equal(drift[2],3);assert(drift.every(Number.isFinite));
 });
-test('Auto-Orient rejects separated Position and enabled native auto-orient before adding controls',()=>{
- const h=runtime();vm.runInContext('var layer=makeLayer("L",[{matchName:"ADBE Rotate Z"}]);var baseProperty=layer.property;var motion={dimensionsSeparated:true};layer.property=function(k){return k==="ADBE Transform Group"?{property:function(){return motion;}}:baseProperty(k);};var AutoOrientType={NO_AUTO_ORIENT:0};layer.autoOrient=0;',h);
- const apply=()=>JSON.parse(h.applyExpression(byId(413).code,byId(413).controllers,byId(413).targetSpec,'both'));
- assert(!apply().ok);assert.equal(h.layer.effects.length,0);h.motion.dimensionsSeparated=false;h.layer.autoOrient=1;assert(!apply().ok);assert.equal(h.layer.effects.length,0);
- h.layer.autoOrient=0;assert(apply().ok);assert.equal(h.layer.effects.length,2);
+test('Posterize plus Wiggle controllers are actually consumed; flicker is bounded',()=>{
+ let fps,wig;evaluate(301,{'Frame Rate':15,Frequency:3,Amplitude:7},{posterizeTime:n=>{fps=n;},wiggle:(f,a)=>{wig=[f,a];return 0;}});assert.equal(fps,15);assert.deepEqual(wig,[3,7]);
+ let seed;const result=evaluate(302,{Speed:0,Min:200,Max:-10},{index:2,seedRandom:n=>{seed=n;},random:(lo,hi)=>hi});assert.equal(result,100);assert.equal(seed,2);
+});
+test('Loop In dispatches before-key functions and explains its time region',()=>{
+ [207,209].forEach(id=>{assert(byId(id).hint.includes('BEFORE'));assert(byId(id).description.includes('in-point'));});
 });
 
 console.log('\n'+passed+'/'+results.length+' checks passed. AE objects are mocked; live AE acceptance remains required.');

@@ -1,4 +1,4 @@
-// Bundled presets. Keep IDs stable for nondestructive migrations.
+// Bundled presets. Stable IDs; Essentials uses references to avoid copies.
 const targetTypes = {
   "any": {
     "label": "Any expression property"
@@ -80,9 +80,50 @@ const targetTypes = {
   },
   "other": {
     "label": "Other (any expression property)"
+  },
+  "positionRotation": {
+    "label": "Position or Rotation",
+    "matchNames": [
+      "ADBE Position",
+      "ADBE Rotate Z",
+      "ADBE Rotate X",
+      "ADBE Rotate Y",
+      "ADBE Vector Rotation"
+    ],
+    "unseparated": true
+  },
+  "animated": {
+    "label": "Any keyframed property"
   }
 };
 const defaultLibrary = {
+  "Essentials": [
+    {
+      "id": 407,
+      "name": "Auto Center Anchor Point",
+      "target": "anchor",
+      "code": "// Apply to Anchor Point\n// Text or shape layer Transform > Anchor Point, not a shape group's anchor.\nvar r = sourceRectAtTime(time, false);\nvar offset = effect(\"Wrangle 407 - Offset\")(1);\nvar x = r.left + r.width / 2 + offset[0];\nvar y = r.top + r.height / 2 + offset[1];\nvalue.length === 3 ? [x, y, value[2]] : [x, y];\n// Wrangle by Jose \"Hazrd\" Lopez",
+      "controllers": [
+        {
+          "name": "Wrangle 407 - Offset",
+          "label": "Offset",
+          "matchName": "ADBE Point Control",
+          "value": [
+            0,
+            0
+          ]
+        }
+      ],
+      "description": "Centers the layer anchor on current text/shape bounds. Offset is in layer pixels. Changing the anchor can move the artwork; Position is not compensated.",
+      "targetSpec": {
+        "matchNames": [
+          "ADBE Anchor Point"
+        ],
+        "boundsLayer": true
+      },
+      "essential": true
+    }
+  ],
   "Text": [
     {
       "id": 104,
@@ -150,8 +191,8 @@ const defaultLibrary = {
           "matchName": "ADBE Dropdown Control",
           "value": 1,
           "options": [
-            "|",
-            "_"
+            "Vertical Bar",
+            "Underscore"
           ]
         },
         {
@@ -161,7 +202,8 @@ const defaultLibrary = {
           "value": 2
         }
       ],
-      "description": "Reveals characters per second. Toggle Show Cursor; choose | or _. Blink Speed is cycles/second (0 stays visible). Uses the layer’s base text styling."
+      "description": "Types the layer’s text. Show Cursor toggles blinking; Cursor Style selects a vertical bar or underscore. Speed is characters/second, Blink Speed is cycles/second (0 stays visible).",
+      "essential": true
     }
   ],
   "Time": [
@@ -169,7 +211,7 @@ const defaultLibrary = {
       "id": 201,
       "name": "Loop Out",
       "target": "numeric",
-      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 201 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 201 - Keyframe Count\")(1));\nspan = Math.min(Math.floor(span), Math.max(0, numKeys - 1));\n// 0 uses all keyframes; otherwise counts keyframe intervals.\nnumKeys >= 2 ? loopOut(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
+      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\n// Loops AFTER the last keyframe. Leave visible time after the last keyframe.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 201 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 201 - Keyframe Count\")(1));\nspan = Math.min(Math.floor(span), Math.max(0, numKeys - 1));\n// 0 uses all keyframes; otherwise counts keyframe intervals.\nnumKeys >= 2 ? loopOut(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
       "controllers": [
         {
           "name": "Wrangle 201 - Loop Type",
@@ -190,8 +232,10 @@ const defaultLibrary = {
           "value": 0
         }
       ],
-      "description": "loopOut: Cycle, Ping-pong, Offset, or Continue. Keyframe Count is intervals; 0 uses all keys. Continue ignores the span.",
-      "requiresKeys": 2
+      "description": "Repeats after the last keyframe. loopOut: Cycle, Ping-pong, Offset, or Continue. Keyframe Count is intervals; 0 uses all keys. Continue ignores the span.",
+      "requiresKeys": 2,
+      "hint": "Loops AFTER the last keyframe",
+      "essential": true
     },
     {
       "id": 203,
@@ -212,7 +256,7 @@ const defaultLibrary = {
       "id": 207,
       "name": "Loop In",
       "target": "numeric",
-      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 207 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 207 - Keyframe Count\")(1));\nspan = Math.min(Math.floor(span), Math.max(0, numKeys - 1));\n// 0 uses all keyframes; otherwise counts keyframe intervals.\nnumKeys >= 2 ? loopIn(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
+      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\n// Loops BEFORE the first keyframe. Leave visible time before the first keyframe.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 207 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 207 - Keyframe Count\")(1));\nspan = Math.min(Math.floor(span), Math.max(0, numKeys - 1));\n// 0 uses all keyframes; otherwise counts keyframe intervals.\nnumKeys >= 2 ? loopIn(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
       "controllers": [
         {
           "name": "Wrangle 207 - Loop Type",
@@ -233,14 +277,18 @@ const defaultLibrary = {
           "value": 0
         }
       ],
-      "description": "loopIn: Cycle, Ping-pong, Offset, or Continue. Keyframe Count is intervals; 0 uses all keys. Continue ignores the span.",
-      "requiresKeys": 2
+      "description": "Move the first keyframe later than the layer in-point to see the loop before it. loopIn: Cycle, Ping-pong, Offset, or Continue. Keyframe Count is intervals; 0 uses all keys. Continue ignores the span.",
+      "requiresKeys": 2,
+      "hint": "Loops BEFORE the first keyframe",
+      "targetSpec": {
+        "loopBefore": true
+      }
     },
     {
       "id": 208,
       "name": "Loop Out Duration",
       "target": "numeric",
-      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 208 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 208 - Duration Seconds\")(1));\n// 0 uses the default duration relative to the layer in/out point.\nnumKeys >= 2 ? loopOutDuration(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
+      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\n// Loops AFTER the last keyframe. Leave visible time after the last keyframe.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 208 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 208 - Duration Seconds\")(1));\n// 0 uses the default duration relative to the layer in/out point.\nnumKeys >= 2 ? loopOutDuration(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
       "controllers": [
         {
           "name": "Wrangle 208 - Loop Type",
@@ -261,14 +309,15 @@ const defaultLibrary = {
           "value": 0
         }
       ],
-      "description": "loopOutDuration: Cycle, Ping-pong, Offset, or Continue. Duration is seconds; 0 uses the AE default. Continue ignores the span.",
-      "requiresKeys": 2
+      "description": "Repeats after the last keyframe. loopOutDuration: Cycle, Ping-pong, Offset, or Continue. Duration is seconds; 0 uses the AE default. Continue ignores the span.",
+      "requiresKeys": 2,
+      "hint": "Loops AFTER the last keyframe"
     },
     {
       "id": 209,
       "name": "Loop In Duration",
       "target": "numeric",
-      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 209 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 209 - Duration Seconds\")(1));\n// 0 uses the default duration relative to the layer in/out point.\nnumKeys >= 2 ? loopInDuration(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
+      "code": "// Apply to Numeric properties\n// Apply to numeric properties with at least two keyframes.\n// Loops BEFORE the first keyframe. Leave visible time before the first keyframe.\nvar modes = ['cycle', 'pingpong', 'offset', 'continue'];\nvar mode = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 209 - Loop Type\")(1))));\nvar span = Math.max(0, effect(\"Wrangle 209 - Duration Seconds\")(1));\n// 0 uses the default duration relative to the layer in/out point.\nnumKeys >= 2 ? loopInDuration(modes[mode - 1], span) : value;\n// Wrangle by Jose \"Hazrd\" Lopez",
       "controllers": [
         {
           "name": "Wrangle 209 - Loop Type",
@@ -289,8 +338,12 @@ const defaultLibrary = {
           "value": 0
         }
       ],
-      "description": "loopInDuration: Cycle, Ping-pong, Offset, or Continue. Duration is seconds; 0 uses the AE default. Continue ignores the span.",
-      "requiresKeys": 2
+      "description": "Move the first keyframe later than the layer in-point to see the loop before it. loopInDuration: Cycle, Ping-pong, Offset, or Continue. Duration is seconds; 0 uses the AE default. Continue ignores the span.",
+      "requiresKeys": 2,
+      "hint": "Loops BEFORE the first keyframe",
+      "targetSpec": {
+        "loopBefore": true
+      }
     },
     {
       "id": 210,
@@ -314,97 +367,61 @@ const defaultLibrary = {
       "description": "Fades the existing opacity at layer edges. Zero disables that fade; overlapping fades stay bounded."
     },
     {
-      "id": 211,
-      "name": "Random Reveal",
-      "target": "opacity",
-      "code": "// Apply to Opacity\n// Opacity. Animate Progress from 0 to 100 across selected/duplicated layers.\nseedRandom(Math.round(effect(\"Wrangle 211 - Seed\")(1)), true);\nvar threshold = random(0, 100);\nvar progress = Math.max(0, Math.min(100, effect(\"Wrangle 211 - Progress\")(1)));\nprogress >= 100 || (progress > 0 && progress >= threshold) ? value : 0;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "id": 220,
+      "name": "Random Time Offset",
+      "target": "animated",
+      "code": "// Apply to Any keyframed property\n// Purpose: Delays each duplicate’s own keyframed animation randomly. Max Delay is seconds.\nvar maxDelay = Math.max(0, effect(\"Wrangle 220 - Max Delay\")(1));\nseedRandom(index, true);\nvalueAtTime(time - random(0, maxDelay));\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
       "controllers": [
         {
-          "name": "Wrangle 211 - Progress",
-          "label": "Progress",
-          "matchName": "ADBE Slider Control",
-          "value": 50
-        },
-        {
-          "name": "Wrangle 211 - Seed",
-          "label": "Seed",
-          "matchName": "ADBE Slider Control",
-          "value": 0
-        }
-      ],
-      "description": "Animate Progress 0–100 for a stable randomized reveal. Preserves the original opacity; 0 hides all, 100 reveals all."
-    },
-    {
-      "id": 212,
-      "name": "Random Fade In",
-      "target": "opacity",
-      "code": "// Apply to Opacity\n// Opacity. Delay is randomized per layer from its in-point.\nseedRandom(Math.round(effect(\"Wrangle 212 - Seed\")(1)), true);\nvar delay = random(0, Math.max(0, effect(\"Wrangle 212 - Maximum Delay\")(1)));\nvar duration = Math.max(0, effect(\"Wrangle 212 - Fade Seconds\")(1));\nvar elapsed = time - inPoint - delay;\nvar fade = duration === 0 ? (elapsed >= 0 ? 1 : 0) : Math.max(0, Math.min(1, elapsed / duration));\nvalue * fade;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
-      "controllers": [
-        {
-          "name": "Wrangle 212 - Maximum Delay",
-          "label": "Maximum Delay",
-          "matchName": "ADBE Slider Control",
-          "value": 1
-        },
-        {
-          "name": "Wrangle 212 - Fade Seconds",
-          "label": "Fade Seconds",
+          "name": "Wrangle 220 - Max Delay",
+          "label": "Max Delay",
           "matchName": "ADBE Slider Control",
           "value": 0.5
-        },
-        {
-          "name": "Wrangle 212 - Seed",
-          "label": "Seed",
-          "matchName": "ADBE Slider Control",
-          "value": 0
         }
       ],
-      "description": "Randomly staggers fade-ins without naming or linking layers. Delays and duration are seconds; animate Seed only if you want changing timing."
+      "description": "Delays each duplicate’s own keyframed animation randomly. Max Delay is seconds.",
+      "requiresKeys": 2,
+      "essential": true
     },
     {
-      "id": 213,
-      "name": "Opacity Wave",
-      "target": "opacity",
-      "code": "// Apply to Opacity\n// Opacity. Frequency is cycles/second; phases are degrees.\nvar phase = effect(\"Wrangle 213 - Phase\")(1) + (index - 1) * effect(\"Wrangle 213 - Layer Phase\")(1);\nvar wave = (1 + Math.sin((time - inPoint) * effect(\"Wrangle 213 - Frequency\")(1) * Math.PI * 2 + phase * Math.PI / 180)) / 2;\nvar low = Math.max(0, Math.min(100, effect(\"Wrangle 213 - Minimum\")(1)));\nvar high = Math.max(0, Math.min(100, effect(\"Wrangle 213 - Maximum\")(1)));\nvar lo = Math.min(low, high), hi = Math.max(low, high);\nvalue * (lo + (hi - lo) * wave) / 100;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "id": 221,
+      "name": "Stagger by Layer Index",
+      "target": "animated",
+      "code": "// Apply to Any keyframed property\n// Purpose: Cascades each layer’s own keyframes by its composition index. Delay is seconds; reordering layers changes timing.\nvar delay = effect(\"Wrangle 221 - Delay\")(1);\nvalueAtTime(time - (index - 1) * delay);\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
       "controllers": [
         {
-          "name": "Wrangle 213 - Frequency",
-          "label": "Frequency",
+          "name": "Wrangle 221 - Delay",
+          "label": "Delay",
           "matchName": "ADBE Slider Control",
-          "value": 1
-        },
-        {
-          "name": "Wrangle 213 - Minimum",
-          "label": "Minimum",
-          "matchName": "ADBE Slider Control",
-          "value": 0
-        },
-        {
-          "name": "Wrangle 213 - Maximum",
-          "label": "Maximum",
-          "matchName": "ADBE Slider Control",
-          "value": 100
-        },
-        {
-          "name": "Wrangle 213 - Phase",
-          "label": "Phase",
-          "matchName": "ADBE Angle Control",
-          "value": 0
-        },
-        {
-          "name": "Wrangle 213 - Layer Phase",
-          "label": "Layer Phase",
-          "matchName": "ADBE Angle Control",
-          "value": 30
+          "value": 0.1
         }
       ],
-      "description": "Smooth opacity pulses. Layer Phase offsets duplicated layers; limits are percentages of the existing opacity. Reordering layers changes their phase."
+      "description": "Cascades each layer’s own keyframes by its composition index. Delay is seconds; reordering layers changes timing.",
+      "requiresKeys": 2,
+      "essential": true
+    },
+    {
+      "id": 222,
+      "name": "Loop with Offset",
+      "target": "numeric",
+      "code": "// Apply to Numeric properties\n// Purpose: Repeats after the last keyframe while accumulating change. Keyframe Count is intervals; 0 uses all keyframes.\nvar count = Math.max(0, Math.min(numKeys - 1, Math.floor(effect(\"Wrangle 222 - Keyframe Count\")(1))));\nnumKeys >= 2 ? loopOut('offset', count) : value;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 222 - Keyframe Count",
+          "label": "Keyframe Count",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        }
+      ],
+      "description": "Repeats after the last keyframe while accumulating change. Keyframe Count is intervals; 0 uses all keyframes.",
+      "requiresKeys": 2,
+      "hint": "Loops AFTER the last keyframe"
     }
   ],
   "Wiggle": [
     {
       "id": 301,
-      "name": "Choppy Stop Motion",
+      "name": "Posterize + Wiggle",
       "code": "// Apply to Numeric properties\nposterizeTime(Math.max(0.01, effect(\"Wrangle 301 - Frame Rate\")(1)));\nwiggle(Math.max(0, effect(\"Wrangle 301 - Frequency\")(1)), Math.max(0, effect(\"Wrangle 301 - Amplitude\")(1)));\n// Wrangle by Jose \"Hazrd\" Lopez",
       "target": "numeric",
       "controllers": [
@@ -427,22 +444,8 @@ const defaultLibrary = {
           "value": 20
         }
       ],
-      "description": "Stepped random motion. Amplitude uses the selected property’s units."
-    },
-    {
-      "id": 302,
-      "name": "Random Flicker Opacity",
-      "code": "// Apply to Opacity\nposterizeTime(Math.max(0.01, effect(\"Wrangle 302 - Frame Rate\")(1)));\nrandom(0, 100);\n// Wrangle by Jose \"Hazrd\" Lopez",
-      "target": "opacity",
-      "controllers": [
-        {
-          "name": "Wrangle 302 - Frame Rate",
-          "label": "Frame Rate",
-          "matchName": "ADBE Slider Control",
-          "value": 12
-        }
-      ],
-      "description": "Randomizes opacity from 0 to 100 at the chosen frame rate."
+      "description": "Stepped random motion. Amplitude uses the selected property’s units.",
+      "essential": true
     },
     {
       "id": 304,
@@ -532,42 +535,127 @@ const defaultLibrary = {
           "value": 20
         }
       ],
-      "description": "Random motion; amplitude uses the selected property’s units."
+      "description": "Random motion; amplitude uses the selected property’s units.",
+      "essential": true
+    },
+    {
+      "id": 320,
+      "name": "Oscillate",
+      "target": "numeric",
+      "code": "// Apply to Numeric properties\n// Purpose: Adds smooth sine motion. Speed is cycles/second; choose an axis for vector properties.\nvar speed = effect(\"Wrangle 320 - Speed\")(1);\nvar amount = effect(\"Wrangle 320 - Amount\")(1);\nvar t = time - inPoint;\nvar offset = Math.sin(t * speed * Math.PI * 2) * amount;\nvar axis = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 320 - Axis\")(1))));\nvar result = value;\nif (typeof value === 'number') result += offset;\nelse { result = value.slice(0); for (var d = 0; d < result.length; d++) if (axis === 1 || d === axis - 2) result[d] += offset; }\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 320 - Speed",
+          "label": "Speed",
+          "matchName": "ADBE Slider Control",
+          "value": 1
+        },
+        {
+          "name": "Wrangle 320 - Amount",
+          "label": "Amount",
+          "matchName": "ADBE Slider Control",
+          "value": 20
+        },
+        {
+          "name": "Wrangle 320 - Axis",
+          "label": "Axis",
+          "matchName": "ADBE Dropdown Control",
+          "value": 2,
+          "options": [
+            "All",
+            "X",
+            "Y",
+            "Z"
+          ]
+        }
+      ],
+      "description": "Adds smooth sine motion. Speed is cycles/second; choose an axis for vector properties.",
+      "essential": true
+    },
+    {
+      "id": 321,
+      "name": "Ping-Pong Oscillate",
+      "target": "numeric",
+      "code": "// Apply to Numeric properties\n// Purpose: Adds linear back-and-forth motion. A full cycle takes 2 / abs(Speed) seconds; choose an axis for vectors.\nvar speed = effect(\"Wrangle 321 - Speed\")(1);\nvar amount = effect(\"Wrangle 321 - Amount\")(1);\nvar t = time - inPoint;\nvar phase = ((t * speed) % 2 + 2) % 2;\nvar triangle = phase < 1 ? phase : 2 - phase;\nvar offset = (triangle * 2 - 1) * amount;\nvar axis = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 321 - Axis\")(1))));\nvar result = value;\nif (typeof value === 'number') result += offset;\nelse { result = value.slice(0); for (var d = 0; d < result.length; d++) if (axis === 1 || d === axis - 2) result[d] += offset; }\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 321 - Speed",
+          "label": "Speed",
+          "matchName": "ADBE Slider Control",
+          "value": 1
+        },
+        {
+          "name": "Wrangle 321 - Amount",
+          "label": "Amount",
+          "matchName": "ADBE Slider Control",
+          "value": 20
+        },
+        {
+          "name": "Wrangle 321 - Axis",
+          "label": "Axis",
+          "matchName": "ADBE Dropdown Control",
+          "value": 2,
+          "options": [
+            "All",
+            "X",
+            "Y",
+            "Z"
+          ]
+        }
+      ],
+      "description": "Adds linear back-and-forth motion. A full cycle takes 2 / abs(Speed) seconds; choose an axis for vectors.",
+      "essential": false
+    },
+    {
+      "id": 322,
+      "name": "Drift",
+      "target": "positionRotation",
+      "code": "// Apply to Position or Rotation\n// Purpose: Slow organic Position or Rotation motion. Speed is radians/second; Amount uses pixels or degrees. Preserves Z.\nvar speed = effect(\"Wrangle 322 - Speed\")(1);\nvar amount = effect(\"Wrangle 322 - Amount\")(1);\nvar t = time - inPoint;\nseedRandom(index, true);\nvar phaseX = random(0, Math.PI * 2);\nvar x = Math.sin(t * speed + phaseX) * amount;\nvar result = value;\nif (typeof value === 'number') result += x;\nelse {\n var phaseY = random(0, Math.PI * 2);\n result = value.slice(0); result[0] += x; result[1] += Math.cos(t * speed * 0.83 + phaseY) * amount;\n}\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 322 - Speed",
+          "label": "Speed",
+          "matchName": "ADBE Slider Control",
+          "value": 0.5
+        },
+        {
+          "name": "Wrangle 322 - Amount",
+          "label": "Amount",
+          "matchName": "ADBE Slider Control",
+          "value": 20
+        }
+      ],
+      "description": "Slow organic Position or Rotation motion. Speed is radians/second; Amount uses pixels or degrees. Preserves Z."
     }
   ],
   "Transform": [
     {
       "id": 402,
-      "name": "Random Layer Scale",
-      "code": "// Apply to Scale\nvar lo = Math.min(effect(\"Wrangle 402 - Minimum\")(1), effect(\"Wrangle 402 - Maximum\")(1));\nvar hi = Math.max(effect(\"Wrangle 402 - Minimum\")(1), effect(\"Wrangle 402 - Maximum\")(1));\nseedRandom(index + Math.round(effect(\"Wrangle 402 - Seed\")(1)), true);\nvar s = random(lo, hi);\nvalue.length === 3 ? [s, s, s] : [s, s];\n// Wrangle by Jose \"Hazrd\" Lopez",
+      "name": "Randomize Scale",
       "target": "scale",
+      "code": "// Apply to Scale\n// Purpose: Stable random scale variation that preserves existing proportions and 2D/3D dimensions. Min/Max are percentages.\nvar lo = Math.min(effect(\"Wrangle 402 - Min\")(1), effect(\"Wrangle 402 - Max\")(1));\nvar hi = Math.max(effect(\"Wrangle 402 - Min\")(1), effect(\"Wrangle 402 - Max\")(1));\nseedRandom(index, true);\nvar factor = random(lo, hi) / 100;\nvar result = value.slice(0);\nfor (var d = 0; d < result.length; d++) result[d] *= factor;\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
       "controllers": [
         {
-          "name": "Wrangle 402 - Minimum",
-          "label": "Minimum",
+          "name": "Wrangle 402 - Min",
+          "label": "Min",
           "matchName": "ADBE Slider Control",
-          "value": 50
+          "value": 80
         },
         {
-          "name": "Wrangle 402 - Maximum",
-          "label": "Maximum",
+          "name": "Wrangle 402 - Max",
+          "label": "Max",
           "matchName": "ADBE Slider Control",
-          "value": 150
-        },
-        {
-          "name": "Wrangle 402 - Seed",
-          "label": "Seed",
-          "matchName": "ADBE Slider Control",
-          "value": 0
+          "value": 120
         }
       ],
-      "description": "One stable, uniform scale per layer. Minimum and Maximum are percentages."
+      "description": "Stable random scale variation that preserves existing proportions and 2D/3D dimensions. Min/Max are percentages.",
+      "essential": true
     },
     {
       "id": 403,
       "name": "Maintain Stroke Width",
-      "code": "// Apply to Shape Stroke Width\nvar x = length(thisLayer.toCompVec([1, 0, 0]));\nvar y = length(thisLayer.toCompVec([0, 1, 0]));\nvar scaleFactor = Math.max((x + y) / 2, 0.001);\nvalue * Math.max(0, effect(\"Wrangle 403 - Width Multiplier\")(1)) / scaleFactor;\n// Wrangle by Jose \"Hazrd\" Lopez",
       "target": "stroke",
+      "code": "// Apply to Shape Stroke Width\n// Purpose: Compensates current layer X/Y scale. Parent and nested shape-group scaling are not compensated; nonuniform scale is approximate.\nvar sx = Math.abs(transform.scale[0]) / 100;\nvar sy = Math.abs(transform.scale[1]) / 100;\nvar average = (sx + sy) / 2;\nvar width = value * Math.max(0, effect(\"Wrangle 403 - Width Multiplier\")(1));\naverage < 0.0001 ? width : width / average;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
       "controllers": [
         {
           "name": "Wrangle 403 - Width Multiplier",
@@ -576,7 +664,7 @@ const defaultLibrary = {
           "value": 1
         }
       ],
-      "description": "Compensates for layer/parent scale. For predictable results use uniform scale and unscaled shape groups; nonuniform/perspective scaling is approximate."
+      "description": "Compensates current layer X/Y scale. Parent and nested shape-group scaling are not compensated; nonuniform scale is approximate."
     },
     {
       "id": 404,
@@ -633,30 +721,6 @@ const defaultLibrary = {
       "description": "Orbits the original position in its parent space. Speed is revolutions per second; Z is preserved."
     },
     {
-      "id": 407,
-      "name": "Auto Center Anchor Point",
-      "target": "anchor",
-      "code": "// Apply to Anchor Point\n// Text or shape layer Transform > Anchor Point, not a shape group's anchor.\nvar r = sourceRectAtTime(time, false);\nvar offset = effect(\"Wrangle 407 - Offset\")(1);\nvar x = r.left + r.width / 2 + offset[0];\nvar y = r.top + r.height / 2 + offset[1];\nvalue.length === 3 ? [x, y, value[2]] : [x, y];\n// Wrangle by Jose \"Hazrd\" Lopez",
-      "controllers": [
-        {
-          "name": "Wrangle 407 - Offset",
-          "label": "Offset",
-          "matchName": "ADBE Point Control",
-          "value": [
-            0,
-            0
-          ]
-        }
-      ],
-      "description": "Centers the layer anchor on current text/shape bounds. Offset is in layer pixels. Changing the anchor can move the artwork; Position is not compensated.",
-      "targetSpec": {
-        "matchNames": [
-          "ADBE Anchor Point"
-        ],
-        "boundsLayer": true
-      }
-    },
-    {
       "id": 408,
       "name": "Counter Rotation",
       "target": "rotation",
@@ -678,161 +742,176 @@ const defaultLibrary = {
       }
     },
     {
-      "id": 409,
-      "name": "Inertial Bounce",
-      "target": "numeric",
-      "code": "// Apply to Numeric properties\n// Apply to keyframed numeric properties (Position, Scale, Rotation, etc.).\nvar amp = Math.max(0, effect(\"Wrangle 409 - Amplitude\")(1));\nvar freq = Math.max(0, effect(\"Wrangle 409 - Frequency\")(1));\nvar decay = Math.max(0.01, effect(\"Wrangle 409 - Decay\")(1));\nvar n = 0;\nif (numKeys > 0) { n = nearestKey(time).index; if (key(n).time > time) n--; }\nvar result = value;\nif (n > 0) {\n var t = time - key(n).time;\n var v = velocityAtTime(key(n).time - thisComp.frameDuration / 10);\n var factor = amp * Math.sin(freq * t * 2 * Math.PI) / Math.exp(decay * t);\n if (value instanceof Array) {\n  result = []; for (var i = 0; i < value.length; i++) result.push(value[i] + v[i] * factor);\n } else result = value + v * factor;\n}\nresult;\n// Wrangle by Jose \"Hazrd\" Lopez",
+      "id": 420,
+      "name": "Randomize Rotation",
+      "target": "rotation",
+      "code": "// Apply to Rotation\n// Purpose: Gives duplicated layers stable random rotation in degrees.\nvar amount = Math.abs(effect(\"Wrangle 420 - Amount\")(1));\nseedRandom(index, true);\nvalue + random(-amount, amount);\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
       "controllers": [
         {
-          "name": "Wrangle 409 - Amplitude",
-          "label": "Amplitude",
+          "name": "Wrangle 420 - Amount",
+          "label": "Amount",
           "matchName": "ADBE Slider Control",
-          "value": 0.05
-        },
-        {
-          "name": "Wrangle 409 - Frequency",
-          "label": "Frequency",
-          "matchName": "ADBE Slider Control",
-          "value": 3
-        },
-        {
-          "name": "Wrangle 409 - Decay",
-          "label": "Decay",
-          "matchName": "ADBE Slider Control",
-          "value": 5
+          "value": 30
         }
       ],
-      "description": "Adds a decaying overshoot using incoming keyframe velocity. Hold keys or zero incoming velocity produce no bounce.",
-      "requiresKeys": 2
+      "description": "Gives duplicated layers stable random rotation in degrees."
     },
     {
-      "id": 410,
-      "name": "Constant Drift",
-      "target": "numeric",
-      "code": "// Apply to Numeric properties\n// Numeric properties: units per second, relative to the layer in-point.\n// Axis affects vector properties only. A missing Z axis leaves 2D values unchanged.\nvar speed = effect(\"Wrangle 410 - Speed\")(1);\nvar elapsed = time - inPoint - effect(\"Wrangle 410 - Delay Seconds\")(1);\nif (effect(\"Wrangle 410 - Hold Before Start\")(1) > 0) elapsed = Math.max(0, elapsed);\nvar offset = speed * elapsed;\nvar axis = Math.max(1, Math.min(4, Math.round(effect(\"Wrangle 410 - Axis\")(1))));\nvar result = value;\nif (typeof value === 'number') result += offset;\nelse { result = value.slice(0); for (var d = 0; d < result.length; d++) if (axis === 1 || d === axis - 2) result[d] += offset; }\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
+      "id": 421,
+      "name": "Randomize Position",
+      "target": "position",
+      "code": "// Apply to Position (2D / 3D)\n// Purpose: Scatters duplicates around their original Position. X/Y amounts are pixels; Z is preserved.\nseedRandom(index, true);\nvar result = value.slice(0);\nvar x = Math.abs(effect(\"Wrangle 421 - X Amount\")(1));\nvar y = Math.abs(effect(\"Wrangle 421 - Y Amount\")(1));\nresult[0] += random(-x, x);\nresult[1] += random(-y, y);\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
       "controllers": [
         {
-          "name": "Wrangle 410 - Speed",
-          "label": "Speed",
+          "name": "Wrangle 421 - X Amount",
+          "label": "X Amount",
+          "matchName": "ADBE Slider Control",
+          "value": 100
+        },
+        {
+          "name": "Wrangle 421 - Y Amount",
+          "label": "Y Amount",
+          "matchName": "ADBE Slider Control",
+          "value": 100
+        }
+      ],
+      "description": "Scatters duplicates around their original Position. X/Y amounts are pixels; Z is preserved.",
+      "essential": true
+    },
+    {
+      "id": 423,
+      "name": "Alternate Direction",
+      "target": "positionRotation",
+      "code": "// Apply to Position or Rotation\n// Purpose: Offsets odd/even layers in opposite directions. Uses X for Position (pixels), or Rotation (degrees).\nvar offset = Math.abs(effect(\"Wrangle 423 - Amount\")(1)) * (index % 2 === 0 ? 1 : -1);\nvar result = value;\nif (typeof value === 'number') result += offset;\nelse { result = value.slice(0); result[0] += offset; }\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 423 - Amount",
+          "label": "Amount",
+          "matchName": "ADBE Slider Control",
+          "value": 50
+        }
+      ],
+      "description": "Offsets odd/even layers in opposite directions. Uses X for Position (pixels), or Rotation (degrees)."
+    },
+    {
+      "id": 424,
+      "name": "Progressive Offset — Position",
+      "target": "position",
+      "code": "// Apply to Position (2D / 3D)\n// Purpose: Spaces layers progressively by composition index in pixels. Preserves Z.\nvar n = index - 1;\nvar result = value.slice(0);\nresult[0] += n * effect(\"Wrangle 424 - X Step\")(1);\nresult[1] += n * effect(\"Wrangle 424 - Y Step\")(1);\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 424 - X Step",
+          "label": "X Step",
           "matchName": "ADBE Slider Control",
           "value": 50
         },
         {
-          "name": "Wrangle 410 - Axis",
-          "label": "Axis",
-          "matchName": "ADBE Dropdown Control",
-          "value": 1,
-          "options": [
-            "All",
-            "X",
-            "Y",
-            "Z"
-          ]
-        },
-        {
-          "name": "Wrangle 410 - Delay Seconds",
-          "label": "Delay Seconds",
-          "matchName": "ADBE Slider Control",
-          "value": 0
-        },
-        {
-          "name": "Wrangle 410 - Hold Before Start",
-          "label": "Hold Before Start",
-          "matchName": "ADBE Checkbox Control",
-          "value": 1
-        }
-      ],
-      "description": "Continuous drift from the layer in-point. Speed uses property units/second; choose an axis for vectors."
-    },
-    {
-      "id": 411,
-      "name": "Random Position",
-      "target": "position",
-      "code": "// Apply to Position (2D / 3D)\n// Layer Position, unseparated. Adds stable offsets in parent space.\nvar spread = [Math.abs(effect(\"Wrangle 411 - X Spread\")(1)), Math.abs(effect(\"Wrangle 411 - Y Spread\")(1)), Math.abs(effect(\"Wrangle 411 - Z Spread\")(1))];\nseedRandom(Math.round(effect(\"Wrangle 411 - Seed\")(1)), true);\nvar result = value.slice(0);\nfor (var d = 0; d < result.length; d++) result[d] += random(-spread[d], spread[d]);\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
-      "controllers": [
-        {
-          "name": "Wrangle 411 - X Spread",
-          "label": "X Spread",
-          "matchName": "ADBE Slider Control",
-          "value": 200
-        },
-        {
-          "name": "Wrangle 411 - Y Spread",
-          "label": "Y Spread",
-          "matchName": "ADBE Slider Control",
-          "value": 200
-        },
-        {
-          "name": "Wrangle 411 - Z Spread",
-          "label": "Z Spread",
-          "matchName": "ADBE Slider Control",
-          "value": 0
-        },
-        {
-          "name": "Wrangle 411 - Seed",
-          "label": "Seed",
+          "name": "Wrangle 424 - Y Step",
+          "label": "Y Step",
           "matchName": "ADBE Slider Control",
           "value": 0
         }
       ],
-      "description": "Stable random offsets around each layer’s original Position. Spread is pixels per axis; Z applies only to 3D layers. AE seeds each layer independently."
+      "description": "Spaces layers progressively by composition index in pixels. Preserves Z."
     },
     {
-      "id": 412,
-      "name": "Maintain Scale When Parented",
-      "target": "scale",
-      "code": "// Apply to Scale\n// Layer Transform > Scale; compensates the immediate parent's scale.\n// Best with aligned axes or uniform parent scale. Does not remove shear or ancestor scaling.\n// Near-zero parent axes cannot be inverted: those axes keep their base scale.\nvar amount = Math.max(0, effect(\"Wrangle 412 - Scale Multiplier\")(1));\nvar result = value.slice(0);\nfor (var d = 0; d < result.length; d++) {\n var inherited = 100;\n if (hasParent && effect(\"Wrangle 412 - Compensate Parent\")(1) > 0) {\n  var parentAxes = parent.transform.scale.value;\n  if (d < parentAxes.length && Math.abs(parentAxes[d]) >= 0.01) inherited = parentAxes[d];\n }\n result[d] = value[d] * amount * 100 / inherited;\n}\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://docs.nosleepcreative.com/after-effects/expressions\n//Expressions by Desmon Du/NoSleepCreative",
-      "controllers": [
-        {
-          "name": "Wrangle 412 - Compensate Parent",
-          "label": "Compensate Parent",
-          "matchName": "ADBE Checkbox Control",
-          "value": 1
-        },
-        {
-          "name": "Wrangle 412 - Scale Multiplier",
-          "label": "Scale Multiplier",
-          "matchName": "ADBE Slider Control",
-          "value": 1
-        }
-      ],
-      "description": "Compensates immediate parent scale; use uniform scaling or aligned axes. Handles unparented layers and zero scale safely. Does not remove shear or ancestor scaling.",
-      "targetSpec": {
-        "matchNames": [
-          "ADBE Scale"
-        ]
-      }
-    },
-    {
-      "id": 413,
-      "name": "Auto-Orient Along Path",
+      "id": 425,
+      "name": "Progressive Offset — Rotation",
       "target": "rotation",
-      "code": "// Apply to Rotation\n// Apply to 2D layer Rotation with animated, unseparated Position.\n// Disable AE's built-in Auto-Orient. Angle Offset 0 points the artwork's +X axis along motion.\nvar p = transform.position;\nvar window = Math.max(0.01, Math.min(120, effect(\"Wrangle 413 - Smoothing Frames\")(1))) * thisComp.frameDuration;\nvar sampleTime = time;\nif (p.numKeys >= 2) sampleTime = Math.max(p.key(1).time, Math.min(p.key(p.numKeys).time, sampleTime));\nvar before = p.valueAtTime(sampleTime - window);\nvar after = p.valueAtTime(sampleTime + window);\nvar dx = after[0] - before[0], dy = after[1] - before[1];\nvar result = value + effect(\"Wrangle 413 - Angle Offset\")(1);\nif (dx * dx + dy * dy > 0.00000001) result += Math.atan2(dy, dx) * 180 / Math.PI;\nresult;\n// Adapted for Wrangle: controllers and safeguards.\n// Source: https://videolancer.net/expressions/\n//Expressions by Videolancer",
+      "code": "// Apply to Rotation\n// Purpose: Offsets Rotation progressively by composition index. Step is degrees.\nvalue + (index - 1) * effect(\"Wrangle 425 - Step\")(1);\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
       "controllers": [
         {
-          "name": "Wrangle 413 - Smoothing Frames",
-          "label": "Smoothing Frames",
+          "name": "Wrangle 425 - Step",
+          "label": "Step",
           "matchName": "ADBE Slider Control",
-          "value": 3
-        },
-        {
-          "name": "Wrangle 413 - Angle Offset",
-          "label": "Angle Offset",
-          "matchName": "ADBE Angle Control",
-          "value": 0
+          "value": 15
         }
       ],
-      "description": "Follows Position motion with adjustable smoothing and angle offset. 2D only; turn off built-in Auto-Orient. Stationary segments use the original Rotation plus offset.",
-      "targetSpec": {
-        "matchNames": [
-          "ADBE Rotate Z"
-        ],
-        "twoDChain": true,
-        "motionPosition": true
-      }
+      "description": "Offsets Rotation progressively by composition index. Step is degrees."
+    },
+    {
+      "id": 426,
+      "name": "Progressive Offset — Scale",
+      "target": "scale",
+      "code": "// Apply to Scale\n// Purpose: Scales duplicates progressively while preserving proportions. Step is percent per layer index.\nvar factor = 1 + (index - 1) * effect(\"Wrangle 426 - Step\")(1) / 100;\nvar result = value.slice(0);\nfor (var d = 0; d < result.length; d++) result[d] *= factor;\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 426 - Step",
+          "label": "Step",
+          "matchName": "ADBE Slider Control",
+          "value": 10
+        }
+      ],
+      "description": "Scales duplicates progressively while preserving proportions. Step is percent per layer index."
     }
   ],
-  "Utility": [],
+  "Utility": [
+    {
+      "id": 801,
+      "name": "Quantized Value",
+      "target": "numeric",
+      "code": "// Apply to Numeric properties\n// Purpose: Snaps scalar or vector values to fixed increments for stepped or mechanical motion.\nvar step = Math.max(0.0001, Math.abs(effect(\"Wrangle 801 - Step Size\")(1)));\nvar result;\nif (typeof value === 'number') result = Math.round(value / step) * step;\nelse { result = []; for (var d = 0; d < value.length; d++) result.push(Math.round(value[d] / step) * step); }\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 801 - Step Size",
+          "label": "Step Size",
+          "matchName": "ADBE Slider Control",
+          "value": 10
+        }
+      ],
+      "description": "Snaps scalar or vector values to fixed increments for stepped or mechanical motion.",
+      "essential": true
+    },
+    {
+      "id": 802,
+      "name": "Clamp Value",
+      "target": "numeric",
+      "code": "// Apply to Numeric properties\n// Purpose: Limits each component of the original/keyframed value to a range. Applying replaces any existing expression.\nvar a = effect(\"Wrangle 802 - Min\")(1), b = effect(\"Wrangle 802 - Max\")(1);\nvar lo = Math.min(a, b), hi = Math.max(a, b);\nvar result;\nif (typeof value === 'number') result = Math.max(lo, Math.min(hi, value));\nelse { result = []; for (var d = 0; d < value.length; d++) result.push(Math.max(lo, Math.min(hi, value[d]))); }\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 802 - Min",
+          "label": "Min",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        },
+        {
+          "name": "Wrangle 802 - Max",
+          "label": "Max",
+          "matchName": "ADBE Slider Control",
+          "value": 100
+        }
+      ],
+      "description": "Limits each component of the original/keyframed value to a range. Applying replaces any existing expression.",
+      "essential": true
+    },
+    {
+      "id": 803,
+      "name": "Random Hold",
+      "target": "numeric",
+      "code": "// Apply to Numeric properties\n// Purpose: Holds a random scalar or vector until the next interval. Rate is changes/second; 0 freezes the random value.\nvar rate = Math.max(0, effect(\"Wrangle 803 - Rate\")(1));\nvar a = effect(\"Wrangle 803 - Min\")(1), b = effect(\"Wrangle 803 - Max\")(1);\nvar lo = Math.min(a, b), hi = Math.max(a, b);\nseedRandom(Math.floor((time - inPoint) * rate) + index * 1000, true);\nvar result;\nif (typeof value === 'number') result = random(lo, hi);\nelse { result = []; for (var d = 0; d < value.length; d++) result.push(random(lo, hi)); }\nresult;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 803 - Rate",
+          "label": "Rate",
+          "matchName": "ADBE Slider Control",
+          "value": 2
+        },
+        {
+          "name": "Wrangle 803 - Min",
+          "label": "Min",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        },
+        {
+          "name": "Wrangle 803 - Max",
+          "label": "Max",
+          "matchName": "ADBE Slider Control",
+          "value": 100
+        }
+      ],
+      "description": "Holds a random scalar or vector until the next interval. Rate is changes/second; 0 freezes the random value."
+    }
+  ],
   "Color": [
     {
       "id": 601,
@@ -892,5 +971,55 @@ const defaultLibrary = {
       "description": "Pulses lightness while preserving the original hue, saturation, and alpha."
     }
   ],
-  "Custom": []
+  "Custom": [],
+  "Opacity": [
+    {
+      "id": 302,
+      "name": "Flicker",
+      "target": "opacity",
+      "code": "// Apply to Opacity\n// Purpose: Stepped light/display flicker. Speed is changes/second; 0 holds a stable random opacity.\nvar speed = Math.max(0, effect(\"Wrangle 302 - Speed\")(1));\nvar a = effect(\"Wrangle 302 - Min\")(1), b = effect(\"Wrangle 302 - Max\")(1);\nvar lo = Math.max(0, Math.min(100, Math.min(a, b)));\nvar hi = Math.max(0, Math.min(100, Math.max(a, b)));\nseedRandom(Math.floor((time - inPoint) * speed) + index, true);\nrandom(lo, hi);\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 302 - Speed",
+          "label": "Speed",
+          "matchName": "ADBE Slider Control",
+          "value": 12
+        },
+        {
+          "name": "Wrangle 302 - Min",
+          "label": "Min",
+          "matchName": "ADBE Slider Control",
+          "value": 0
+        },
+        {
+          "name": "Wrangle 302 - Max",
+          "label": "Max",
+          "matchName": "ADBE Slider Control",
+          "value": 100
+        }
+      ],
+      "description": "Stepped light/display flicker. Speed is changes/second; 0 holds a stable random opacity."
+    },
+    {
+      "id": 422,
+      "name": "Randomize Opacity",
+      "target": "opacity",
+      "code": "// Apply to Opacity\n// Purpose: Stable opacity variation for stars, crowds and texture elements.\nseedRandom(index, true);\nvar lo = Math.max(0, Math.min(100, Math.min(effect(\"Wrangle 422 - Min\")(1), effect(\"Wrangle 422 - Max\")(1))));\nvar hi = Math.max(0, Math.min(100, Math.max(effect(\"Wrangle 422 - Min\")(1), effect(\"Wrangle 422 - Max\")(1))));\nrandom(lo, hi);\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).",
+      "controllers": [
+        {
+          "name": "Wrangle 422 - Min",
+          "label": "Min",
+          "matchName": "ADBE Slider Control",
+          "value": 40
+        },
+        {
+          "name": "Wrangle 422 - Max",
+          "label": "Max",
+          "matchName": "ADBE Slider Control",
+          "value": 100
+        }
+      ],
+      "description": "Stable opacity variation for stars, crowds and texture elements."
+    }
+  ]
 };
