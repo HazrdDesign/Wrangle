@@ -2,15 +2,16 @@
 
 One-click expressions with their controls. Select timeline properties, then click a library row.
 
-## 1.6.1 update
+## Wrangle 2.0.0
 
-Library rows show the preset name, Apply To property, and controller count. Extra keyframe/timing lines, description tooltips, and appended timing messages are removed.
+40 bundled expressions with controllers, property targeting, Essentials shortcuts, and a redesigned charcoal panel with a customizable accent. Library rows stay compact, showing the expression name, property, and controller count.
 
-The existing 40 expressions were compared with NoSleepCreative's page. Matching methods credit Desmond Du/NoSleepCreative or the original source linked there (Dan Ebberts for Wiggle Loop). The remaining presets credit Jose "Hazrd" Lopez. The placeholder Markdown-filename attribution is removed. Expression behavior and controllers are unchanged.
+Saved libraries upgrade automatically with backups and corrected source credits; custom edits, controller values, organization, and deletions are preserved. No preset reset is needed.
 
-Saved libraries receive corrected credits automatically, with a backup, while preserving user edits, controller values, organization, and deletions. No reset is needed.
+The owner completed After Effects testing and confirmed the plugin looks and works correctly. The tested 1.6.1 functionality is unchanged in 2.0.0.
 
-[Update notes and credit comparison](docs/UPDATE-1.6.1.md). 49 automated checks passed; browser preview confirms compact rows. After Effects testing is left to the user.
+[Download the signed ZXP](https://github.com/HazrdDesign/Wrangle/releases/tag/v2.0.0) · [Release notes](docs/UPDATE-2.0.md) · [Installation and library reset guide](docs/README.txt)
+
 ## Use
 
 - **Click:** expression and controllers, on compatible selected properties.
