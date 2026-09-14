@@ -1,5 +1,5 @@
 WRANGLE FOR AFTER EFFECTS
-Version 1.6.1
+Version 2.0.0
 ==========================
 
 Create, apply, and organize expressions without digging through expression code.
@@ -22,7 +22,7 @@ INSTALLATION / UPDATING
 1. Close After Effects. If updating, back up your library first (see below).
 2. Open a ZXP installer, such as ZXP Installer:
    https://zxpinstaller.com/
-3. Install the included Wrangle-v1.6.1.zxp file by dragging it into the installer.
+3. Install the included Wrangle-v2.0.0.zxp file by dragging it into the installer.
 4. Open After Effects, then choose Window > Extensions > Wrangle.
 5. Dock the panel wherever you prefer in your workspace.
 
@@ -131,7 +131,7 @@ already applied to After Effects projects are not changed by this reset.
    folder exists, continue. This also resets Wrangle's saved accent color.
 
 5. Reopen After Effects and Wrangle. The plugin creates a new data.json with
-   the bundled presets. Version 1.6.1 includes 40 unique presets; Essentials
+   the bundled presets. Version 2.0.0 includes 40 unique presets; Essentials
    shortcuts can show the same preset in more than one category.
 
 RESTORE A LIBRARY BACKUP
