@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<ExtensionManifest 
-    Version="6.0" 
-    ExtensionBundleId="com.hazrd.wrangle" 
-    ExtensionBundleVersion="1.0.0" 
-    ExtensionBundleName="Wrangle" 
+<ExtensionManifest
+    Version="6.0"
+    ExtensionBundleId="com.hazrd.wrangle"
+    ExtensionBundleVersion="2.0.0"
+    ExtensionBundleName="Wrangle"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <ExtensionList>
-        <Extension Id="com.hazrd.wrangle" Version="1.0.0" />
+        <Extension Id="com.hazrd.wrangle" Version="2.0.0" />
     </ExtensionList>
 
     <ExecutionEnvironment>
         <HostList>
-            <Host Name="AEFT" Version="[0.0,99.9]" />
+            <Host Name="AEFT" Version="[17.0,99.9]" />
         </HostList>
         <LocaleList>
             <Locale Code="All" />

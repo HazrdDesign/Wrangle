@@ -1,270 +1,154 @@
-// Default Expression Library
-const defaultLibrary = {
-    "Text": [
-        { id: 101, name: "Lock Gradient Ramp to Text", code: "// Apply to Gradient Ramp's Start and End positions\nthisLayer.toComp(value);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
-        { id: 102, name: "Auto Center Anchor Point", code: "// Apply to Text Layer's Anchor Point\nr = sourceRectAtTime(time, false);\n[r.left + r.width/2, r.top + r.height/2];\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
-        { id: 103, name: "Typewriter with Cursor", code: "// Apply to Source Text\nn = Math.min(text.sourceText.length, Math.floor(time * effect(\"Speed\")(\"Slider\")));\ntext.sourceText.substr(0, n) + \"|\";\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }], color: "#2ed573" },
-        { id: 104, name: "Digital Clock", code: "// Apply to Source Text\nh = Math.floor(time / 3600);\nm = Math.floor(time / 60) % 60;\ns = Math.floor(time % 60);\n[h, m, s].map(x => x < 10 ? \"0\" + x : x).join(\":\");\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
-        { id: 105, name: "Number Counter", code: "// Apply to Source Text\nn = Math.round(value);\nn.toLocaleString();\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#2ed573" },
-        { id: 106, name: "Glitched Text", code: "// Apply to Source Text\noriginalText = text.sourceText;\nglitchSpeed = effect(\"Speed\")(\"Slider\");\ncorruptionLevel = effect(\"Corruption\")(\"Slider\") / 100;\n\n// Full range of printable Unicode characters approximation\nunicodeStart = 33;  // \"!\"\nunicodeEnd = 126;   // \"~\"\n\nresult = \"\";\nseedRandom(Math.floor(time * glitchSpeed * 10), true);\n\nfor (i = 0; i < originalText.length; i++) {\n    char = originalText.charAt(i);\n    if (char == \" \") {\n        result += \" \";\n        continue;\n    }\n    if (random() < corruptionLevel) {\n        switch (Math.floor(random(4))) {\n            case 0: \n                // Pick random printable ASCII character\n                result += String.fromCharCode(Math.floor(random(unicodeStart, unicodeEnd+1)));\n                break;\n            case 1: \n                // Duplicate the original char for glitchy effect\n                result += char + char;\n                break;\n            case 2: \n                // Randomize case\n                result += (random() > 0.5) ? char.toUpperCase() : char.toLowerCase();\n                break;\n            case 3: \n                // Pick a random high Unicode block for “weird” symbols\n                result += String.fromCharCode(Math.floor(random(0x2500, 0x25FF))); // Box-drawing block\n                break;\n        }\n    } else {\n        result += char;\n    }\n}\nresult;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }, { name: "Corruption", matchName: "ADBE Slider Control" }], color: "#2ed573" }
-    ],
-    "Time": [
-        { id: 201, name: "Loop (Dropdown Select)", code: "// Apply to any keyframed property\nloopMap = [\"cycle\", \"pingpong\", \"offset\"];\ntype = loopMap[effect(\"Loop Type\")(\"Menu\") - 1];\nloopOut(type);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Loop Type", matchName: "ADBE Dropdown Control" }], color: "#1e90ff" },
-        { id: 203, name: "Posterize Time", code: "// Apply to any property\nposterizeTime(effect(\"Frame Rate\")(\"Slider\"));\nvalue;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frame Rate", matchName: "ADBE Slider Control" }], color: "#1e90ff" },
-        { id: 204, name: "Start / End at Time", code: "// Apply to any property\ntime > inPoint && time < outPoint ? value : valueAtTime(inPoint);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#1e90ff" },
-        { id: 205, name: "Simple Time Driver", code: "// Apply to any property\ntime * 100;\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#1e90ff" },
-        { id: 206, name: "Delay Index Value", code: "// Apply to any property (e.g. Rotation)\ndelayFrames = effect(\"Delay Frames\")(\"Slider\");\ndelayTime = delayFrames * thisComp.frameDuration * (index - 1);\nthisComp.layer(1).rotation.valueAtTime(time - delayTime);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Delay Frames", matchName: "ADBE Slider Control" }], color: "#1e90ff" }
-    ],
-    "Wiggle": [
-        { id: 301, name: "Choppy Stop Motion", code: "// Apply to any property\nposterizeTime(effect(\"Frame Rate\")(\"Slider\"));\nwiggle(effect(\"Frequency\")(\"Slider\"), effect(\"Amplitude\")(\"Slider\"));\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frame Rate", matchName: "ADBE Slider Control" }, { name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ffa502" },
-        { id: 302, name: "Random Flicker Opacity", code: "// Apply to Opacity property\nposterizeTime(effect(\"Frame Rate\")(\"Slider\"));\nrandom(0, 100);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frame Rate", matchName: "ADBE Slider Control" }], color: "#ffa502" },
-        { id: 303, name: "Wiggle 1D (X Only)", code: "// Apply to 2D Position property\nx = wiggle(effect(\"Frequency\")(\"Slider\"), effect(\"Amplitude\")(\"Slider\"))[0];\n[x, value[1]];\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ffa502" },
-        { id: 304, name: "Wiggle Loop", code: "// Apply to any property\nfreq = effect(\"Frequency\")(\"Slider\");\namp = effect(\"Amplitude\")(\"Slider\");\nloopDur = effect(\"Duration\")(\"Slider\");\nw = wiggle(freq, amp, 1, 0.5, time % loopDur);\nw;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }, { name: "Duration", matchName: "ADBE Slider Control" }], color: "#ffa502" }
-    ],
-    "Transform": [
-        { id: 401, name: "Exponential Scale", code: "// Apply to Scale property\nfreq = effect(\"Frequency\")(\"Slider\");\namp = effect(\"Amplitude\")(\"Slider\");\nw = wiggle(freq, amp);\nvalue * (1 + w);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ff4757" },
-        { id: 402, name: "Random Layer Scale", code: "// Apply to Scale property\nseedRandom(index, true);\n[random(50, 150), random(50, 150)];\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ff4757" },
-        { id: 403, name: "Maintain Stroke Width", code: "// Apply to Stroke Width property\nvalue / max(length(toComp([0, 0]), toComp([0.7071, 0.7071])), 0.001);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ff4757" },
-        { id: 404, name: "Procedural Sine Path", code: "// Apply to Shape Path property\namp = effect(\"Amplitude\")(\"Slider\");\nwLen = effect(\"Wavelength\")(\"Slider\");\nlengthTotal = effect(\"Length\")(\"Slider\");\npts = [];\nfor (i = 0; i < 200; i++) {\n  t = i / 199;\n  x = t * lengthTotal - lengthTotal / 2;\n  y = amp * Math.sin(t * lengthTotal / wLen * 2 * Math.PI);\n  pts.push([x, y]);\n}\ncreatePath(pts, [], [], false);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Amplitude", matchName: "ADBE Slider Control" }, { name: "Wavelength", matchName: "ADBE Slider Control" }, { name: "Length", matchName: "ADBE Slider Control" }], color: "#ff4757" },
-        { id: 405, name: "Heartbeat Pulse", code: "// Apply to Scale property\nfreq = effect(\"Frequency\")(\"Slider\");\namp = effect(\"Amplitude\")(\"Slider\");\nvalue + Math.sin(time * freq * 2 * Math.PI) * amp;\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Frequency", matchName: "ADBE Slider Control" }, { name: "Amplitude", matchName: "ADBE Slider Control" }], color: "#ff4757" },
-        { id: 406, name: "Circular Orbit", code: "// Apply to Position property\nspeed = effect(\"Speed\")(\"Slider\");\nradius = effect(\"Radius\")(\"Slider\");\n\na = time * speed;\nvalue + [Math.cos(a) * radius, Math.sin(a) * radius, 0];\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }, { name: "Radius", matchName: "ADBE Slider Control" }], color: "#ff4757" }
-    ],
-    "Utility": [],
-    "Color": [
-        { id: 601, name: "Rainbow Cycle", code: "// Apply to any color property\nspeed = effect(\"Speed\")(\"Slider\");\nh = (time * speed) % 1;\nhslToRgb([h, 1, 0.5, 1]);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "Speed", matchName: "ADBE Slider Control" }], color: "#ffffff" },
-        { id: 602, name: "Random Color Per Second", code: "// Apply to any color property\nseedRandom(Math.floor(time), true);\n[random(), random(), random()];\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ffffff" },
-        { id: 603, name: "Brightness Pulse (Same Hue)", code: "// Apply to any color property\nh = 0.6;\nl = 0.5 + Math.sin(time * 4) * 0.25;\nhslToRgb([h, 1, l]);\n// ®Wrangle by Jose \"Hazrd\" Lopez", color: "#ffffff" }
-    ],
-    "3D": [
-        { id: 702, name: "2D to 3D Space Null", code: "// Apply to 2D Position property\nthisComp.layer(effect(\"3D Layer\")(\"Layer\")).toComp([0, 0, 0]);\n// ®Wrangle by Jose \"Hazrd\" Lopez", controllers: [{ name: "3D Layer", matchName: "ADBE Layer Control" }], color: "#a29bfe" }
-    ],
-    "Custom": []
-};
-
-// Manager for Library Data
+// Data version 16 migrates stock presets without resetting user libraries.
 const LibraryManager = {
-    data: {
-        version: 11,
-        categories: {},
-        icons: {}
-    },
-    filePath: null,
-    fs: null,
-
-    init() {
-        // Initialize Node.js fs
-        try {
-            if (typeof require !== 'undefined') {
-                this.fs = require('fs');
-                const path = require('path');
-                const os = require('os');
-
-                // Define OS-Standard Paths
-                const isWin = process.platform === 'win32';
-                const appData = isWin ? process.env.APPDATA : path.join(os.homedir(), 'Library', 'Application Support');
-                const appDir = path.join(appData, 'Hazrd', 'Wrangle');
-                this.filePath = path.join(appDir, 'data.json');
-
-                // Legacy Path (for migration)
-                const oldDocDir = path.join(os.homedir(), 'Documents', 'Wrangle');
-                const oldFilePath = path.join(oldDocDir, 'data.json');
-
-                // Migration Logic: Check if old file exists but new one doesn't
-                if (!this.fs.existsSync(this.filePath) && this.fs.existsSync(oldFilePath)) {
-                    try {
-                        if (!this.fs.existsSync(appDir)) {
-                            this.fs.mkdirSync(appDir, { recursive: true });
-                        }
-                        this.fs.copyFileSync(oldFilePath, this.filePath);
-                        console.log("Successfully migrated data to OS-standard path.");
-                    } catch (migrationErr) {
-                        console.error("Migration failed:", migrationErr);
-                    }
-                }
-
-                // Ensure the new directory exists
-                if (!this.fs.existsSync(appDir)) {
-                    this.fs.mkdirSync(appDir, { recursive: true });
-                }
-            }
-        } catch (e) {
-            console.error("Node.js initialization failed:", e);
-        }
-
-        this.load();
-    },
-
-    load() {
-        let loadedData = null;
-
-        // Try loading from file first
-        if (this.filePath && this.fs && this.fs.existsSync(this.filePath)) {
-            try {
-                const fileData = this.fs.readFileSync(this.filePath, 'utf8');
-                loadedData = JSON.parse(fileData);
-            } catch (e) {
-                console.error("Error loading file:", e);
-            }
-        }
-
-        // Fallback: Load from localStorage
-        if (!loadedData) {
-            const saved = localStorage.getItem('wrangle_library');
-            if (saved) {
-                loadedData = JSON.parse(saved);
-            }
-        }
-
-        // Initialize with defaults if nothing loaded
-        if (!loadedData) {
-            this.resetToDefaults();
-            return;
-        }
-
-        // MIGRATION LOGIC
-        if (loadedData.version < 11) {
-            console.log("Migrating data to Version 11...");
-
-            // Preserve Custom expressions if they exist
-            const customItems = (loadedData.categories && loadedData.categories["Custom"]) || [];
-
-            // Re-initialize with new defaults
-            this.resetToDefaults();
-
-            // Restore custom items
-            this.data.categories["Custom"] = customItems;
-
-            this.save();
-        } else {
-            // Already Version 11 or newer
-            this.data = loadedData;
-
-            if (!this.data.categories) this.data.categories = {};
-            if (!this.data.icons) this.data.icons = {};
-        }
-    },
-
-    resetToDefaults() {
-        this.data.version = 11;
-        this.data.categories = JSON.parse(JSON.stringify(defaultLibrary));
-
-        // Populate standard icons
-        this.data.icons = {
-            "Text": "🔤",
-            "Time": "🕒",
-            "Wiggle": "🪼",
-            "Transform": "🪄",
-            "Utility": "🛠️",
-            "Color": "🌈",
-            "3D": "🧊",
-            "Custom": "★"
-        };
-        this.save();
-    },
-
-    save() {
-        // Save to file
-        if (this.filePath && this.fs) {
-            try {
-                this.fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 4), 'utf8');
-            } catch (e) {
-                console.error("Error saving file:", e);
-            }
-        }
-
-        // Keep localStorage as backup/sync for now
-        localStorage.setItem('wrangle_library', JSON.stringify(this.data));
-    },
-
-    addExpression(cat, item) {
-        if (!this.data.categories[cat]) this.data.categories[cat] = [];
-        this.data.categories[cat].push(item);
-        this.save();
-    },
-
-    removeExpression(cat, id) {
-        if (this.data.categories[cat]) {
-            this.data.categories[cat] = this.data.categories[cat].filter(item => item.id !== id);
-            this.save();
-        }
-    },
-
-    reorderExpression(cat, fromIndex, toIndex) {
-        if (!this.data.categories[cat]) return;
-
-        const list = this.data.categories[cat];
-        if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex >= list.length) return;
-
-        const [movedItem] = list.splice(fromIndex, 1);
-        list.splice(toIndex, 0, movedItem);
-
-        this.save();
-    },
-
-    reorderCategories(fromIndex, toIndex) {
-        const categories = Object.keys(this.data.categories);
-        if (fromIndex < 0 || fromIndex >= categories.length || toIndex < 0 || toIndex >= categories.length) return;
-
-        const [movedCat] = categories.splice(fromIndex, 1);
-        categories.splice(toIndex, 0, movedCat);
-
-        // Rebuild categories object in new order
-        const newCats = {};
-        categories.forEach(cat => {
-            newCats[cat] = this.data.categories[cat];
-        });
-        this.data.categories = newCats;
-        this.save();
-    },
-
-    renameCategory(oldName, newName) {
-        if (!this.data.categories[oldName] || this.data.categories[newName]) return;
-
-        // Move data
-        this.data.categories[newName] = this.data.categories[oldName];
-        delete this.data.categories[oldName];
-
-        // Move icon
-        if (this.data.icons[oldName]) {
-            this.data.icons[newName] = this.data.icons[oldName];
-            delete this.data.icons[oldName];
-        }
-
-        this.save();
-    },
-
-    deleteCategory(cat) {
-        if (this.data.categories[cat]) {
-            delete this.data.categories[cat];
-        }
-        if (this.data.icons[cat]) {
-            delete this.data.icons[cat];
-        }
-        this.save();
-    },
-
-    getCategories() {
-        return Object.keys(this.data.categories);
-    },
-
-    getItems(cat) {
-        return this.data.categories[cat] || [];
-    },
-
-    getIcon(cat) {
-        return this.data.icons[cat] || "●";
-    },
-
-    createCategory(name, icon) {
-        if (this.data.categories[name]) return false; // Already exists
-        this.data.categories[name] = [];
-        this.data.icons[name] = icon || "●";
-        this.save();
-        return true;
-    },
-
-    setIcon(cat, icon) {
-        this.data.icons[cat] = icon;
-        this.save();
-    }
+ data:null, fs:null, filePath:null, warning:'',
+ clone(x){return JSON.parse(JSON.stringify(x));},
+ validName(s){return typeof s==='string' && s.trim() && !['__proto__','constructor','prototype'].includes(s);},
+ validate(d){
+  if(!d || !d.categories || typeof d.categories!=='object' || Array.isArray(d.categories)) throw Error('Invalid library.');
+  if(Number(d.version)>16) throw Error('Library requires a newer Wrangle version.');
+  Object.keys(d.categories).forEach(c=>{
+   if(!this.validName(c)||!Array.isArray(d.categories[c])) throw Error('Invalid category.');
+   d.categories[c].forEach(i=>{if(!i||i.id==null||typeof i.name!=='string'||typeof i.code!=='string'||(i.controllers&&!Array.isArray(i.controllers))) throw Error('Invalid expression.');});
+  }); return d;
+ },
+ init(){
+  if(typeof require==='function'){
+   const fs=require('fs'),path=require('path'),os=require('os');
+   const base=process.platform==='win32'?process.env.APPDATA:path.join(os.homedir(),'Library','Application Support');
+   const dir=path.join(base,'Hazrd','Wrangle');
+   if(!fs.existsSync(dir))fs.mkdirSync(dir,{recursive:true});
+   this.fs=fs;this.filePath=path.join(dir,'data.json');
+   const old=path.join(os.homedir(),'Documents','Wrangle','data.json');
+   if(!fs.existsSync(this.filePath)&&fs.existsSync(old))fs.copyFileSync(old,this.filePath);
+  } this.load();
+ },
+ load(){
+  const candidates=[];let invalid=false,futureVersion=false;
+  const read=text=>{if(!text)return;try{const parsed=JSON.parse(text);if(Number(parsed.version)>16){futureVersion=true;return;}candidates.push(this.validate(parsed));}catch(e){invalid=true;}};
+  if(this.fs&&this.filePath&&this.fs.existsSync(this.filePath)){try{read(this.fs.readFileSync(this.filePath,'utf8'));}catch(e){invalid=true;}}
+  try{read(localStorage.getItem('wrangle_library'));}catch(e){this.warning='Browser backup unavailable.';}
+  if(futureVersion)throw Error('Saved data requires a newer Wrangle version. Nothing was overwritten.');
+  if(!candidates.length){
+   if(invalid)throw Error('Cannot read saved library. Original data was left untouched; restore a backup.');
+   this.data={version:16,revision:0,categories:this.clone(defaultLibrary),icons:{}};this.save();return;
+  }
+  candidates.sort((a,b)=>(Number(b.revision)||0)-(Number(a.revision)||0));this.data=this.clone(candidates[0]);
+  if(invalid)this.warning='Recovered a valid library copy. Check your saved backups.';
+  if(Number(this.data.version||0)<16){
+   const backup=JSON.stringify(this.data,null,2);
+   if(this.fs&&this.filePath)this.fs.writeFileSync(this.filePath+'.pre-v16-'+Date.now()+'.bak',backup,'utf8');
+   else localStorage.setItem('wrangle_library_pre_v16',backup);
+   this.data=this.migrate(this.data);this.save();
+  } this.data.icons=this.data.icons||{};
+ },
+ migrate(input){
+  if(Number(input.version)>=15)return this.correctCredits(this.clone(input));
+  const d=this.clone(input),originals={},current={},homes={},available={},aliases={};
+  const histories=[legacyLibrary,libraryV12,libraryV13,libraryV14];
+  histories.forEach(catalog=>Object.keys(catalog).forEach(c=>catalog[c].forEach(x=>{(originals[x.id]||(originals[x.id]=[])).push(x);} )));
+  reviewStockVariants.forEach(x=>{(originals[x.id]||(originals[x.id]=[])).push(x);});
+  [legacyLibrary].concat(Number(input.version)>=12?[libraryV12]:[]).concat(Number(input.version)>=13?[libraryV13]:[]).concat(Number(input.version)>=14?[libraryV14]:[]).forEach(catalog=>Object.keys(catalog).forEach(c=>catalog[c].forEach(i=>{available[i.id]=true;})));
+  Object.keys(defaultLibrary).forEach(c=>defaultLibrary[c].forEach(i=>{current[i.id]=i;homes[i.id]=c;}));
+  const same=(a,b)=>a.name===b.name&&a.code===b.code&&JSON.stringify(a.controllers||[])===JSON.stringify(b.controllers||[]);
+  Object.keys(d.categories).forEach(c=>{d.categories[c]=d.categories[c].map(i=>{
+   const repair=reviewRepairs.find(r=>r.id===i.id&&same(i,r.original));
+   if(!repair)return i;
+   const replacement=this.clone(current[repair.to]);replacement.id=i.id;
+   if(repair.to===301){replacement.controllers.forEach(ctrl=>{if(ctrl.label==='Frame Rate'||ctrl.label==='Frequency')ctrl.value=15;if(ctrl.label==='Amplitude')ctrl.value=5;});}
+   if(repair.to===107){const speed=(i.controllers||[]).find(ctrl=>ctrl.name==='Speed');if(speed&&typeof speed.value==='number')replacement.controllers.find(ctrl=>ctrl.label==='Speed').value=speed.value;}
+   aliases[repair.to]=i.id;return replacement;
+  });});
+  Object.keys(d.categories).forEach(c=>{
+   d.categories[c]=d.categories[c].reduce((out,i)=>{
+    const stock=(originals[i.id]||[]).some(o=>same(i,o)&&(!i.target||i.target===o.target));
+    if(stock){if(current[i.id]&&!aliases[i.id])out.push(this.clone(current[i.id]));}
+    else out.push(Object.assign({},i,{target:i.target||'any'}));
+    return out;
+   },[]);
+  });
+  const seen={};Object.keys(d.categories).forEach(c=>d.categories[c].forEach(i=>{seen[i.id]=true;}));
+  const restore=[301,302,402,403,601,602,603];
+  Object.keys(current).forEach(id=>{
+   if(!seen[id]&&!aliases[id]&&(!available[id]||restore.includes(Number(id)))){
+    const cat=homes[id];if(!d.categories[cat])d.categories[cat]=[];d.categories[cat].push(this.clone(current[id]));seen[id]=true;
+   }
+  });
+  // The anchor belongs only in Essentials. Move recognized copies, never name-match arbitrary user code.
+  Object.keys(d.categories).filter(c=>c!=='Essentials').forEach(c=>{
+   d.categories[c]=d.categories[c].filter(i=>{
+    if((i.id===407||i.id===aliases[407])&&i.code===current[407].code){if(!d.categories.Essentials)d.categories.Essentials=[];d.categories.Essentials.push(i);return false;}return true;
+   });
+  });
+  d.categories=Object.assign({Essentials:d.categories.Essentials||[]},d.categories);
+  d.version=16;d.icons=d.icons||{};return this.correctCredits(d);
+ },
+ correctCredits(d){
+  // Match executable code, so renamed/moved stock and controller-value edits also receive credits.
+  // Strip whole comment lines only; never remove text inside expression strings.
+  const body=code=>code.split(/\r?\n/).filter(line=>!/^\s*\/\//.test(line)).join('\n').trim();
+  const current=Object.keys(defaultLibrary).reduce((all,cat)=>all.concat(defaultLibrary[cat]),[]);
+  Object.keys(d.categories).forEach(cat=>d.categories[cat].forEach(item=>{
+   const match=current.find(stock=>body(stock.code)===body(item.code));
+   const oldPlaceholder=/^\/\/ Source: Wrangle_One_Click_Expression_Presets\.md \(author not specified\)\.\r?$/gm;
+   if(match){
+    const footer=match.code.slice(match.code.lastIndexOf('\n// Expressions by '));
+    item.code=item.code.replace(/^\/\/ (?:Wrangle by |Expressions by |Source: ).*\r?\n?/gm,'').trimEnd()+footer;
+   }else item.code=item.code.replace(oldPlaceholder,'// Expressions by Jose "Hazrd" Lopez');
+   delete item.hint;delete item.description;
+  }));
+  d.version=16;return d;
+ },
+ save(){
+  this.data.revision=Math.max(Date.now(),Number(this.data.revision||0)+1);
+  const text=JSON.stringify(this.data,null,2);let fileOK=false,backupOK=false,fileError='';
+  if(this.fs&&this.filePath){
+   try{this.fs.writeFileSync(this.filePath+'.tmp',text,'utf8');this.fs.renameSync(this.filePath+'.tmp',this.filePath);fileOK=true;}
+   catch(e){fileError=e.message;}
+  }
+  try{localStorage.setItem('wrangle_library',text);backupOK=true;}catch(e){}
+  if(!fileOK&&!backupOK)throw Error('Could not save your library. Previous saved data is unchanged.');
+  this.warning=this.fs&&!fileOK?'Saved to browser backup only. File save failed: '+fileError:!backupOK?'Saved to file; browser backup is unavailable.':'';
+ },
+ transaction(fn){const before=this.clone(this.data);try{fn();this.validate(this.data);this.save();}catch(e){this.data=before;throw e;}},
+ getCategories(){return Object.keys(this.data.categories);},
+ getStoredItems(c){return Object.prototype.hasOwnProperty.call(this.data.categories,c)?this.data.categories[c]:[];},
+ getItems(c){
+  if(c!=='Essentials')return this.getStoredItems(c);
+  const items=this.getStoredItems(c).slice(),seen={};items.forEach(i=>{seen[i.id]=true;});
+  Object.keys(this.data.categories).filter(k=>k!==c).forEach(k=>this.getStoredItems(k).forEach(i=>{if(i.essential&&!seen[i.id]){items.push(i);seen[i.id]=true;}}));
+  const order=this.data.essentialOrder||[];items.sort((a,b)=>{const x=order.indexOf(a.id),y=order.indexOf(b.id);return (x<0?order.length:x)-(y<0?order.length:y);});return items;
+ },
+ sourceCategory(c,id){if(c==='Essentials'&&!this.getStoredItems(c).some(i=>i.id===id))return Object.keys(this.data.categories).find(k=>this.getStoredItems(k).some(i=>i.id===id))||c;return c;},
+ getIcon(c){return this.data.icons[c]||'';},
+ saveExpression(oldCat,oldId,cat,item){
+  if(!this.validName(cat))throw Error('Choose a valid category.');
+  if(oldId!=null)oldCat=this.sourceCategory(oldCat,oldId);
+  this.transaction(()=>{
+   if(oldId!=null&&oldCat===cat){const n=this.getStoredItems(cat).findIndex(x=>x.id===oldId);if(n<0)throw Error('Expression no longer exists.');this.data.categories[cat][n]=item;}
+   else{if(oldId!=null)this.data.categories[oldCat]=this.getStoredItems(oldCat).filter(x=>x.id!==oldId);if(!Object.prototype.hasOwnProperty.call(this.data.categories,cat))this.data.categories[cat]=[];this.data.categories[cat].push(item);}
+  });
+ },
+ removeExpression(c,id){c=this.sourceCategory(c,id);this.transaction(()=>{this.data.categories[c]=this.getStoredItems(c).filter(x=>x.id!==id);});},
+ createCategory(name,icon){
+  if(!this.validName(name))throw Error('Choose a valid category name.');
+  if(Object.prototype.hasOwnProperty.call(this.data.categories,name))throw Error('Category already exists.');
+  this.transaction(()=>{this.data.categories[name]=[];this.data.icons[name]=icon||'';});
+ },
+ renameCategory(old,name,icon){
+  if(old==='Essentials')throw Error('Essentials is a built-in view. Move individual expressions to organize them.');
+  if(!this.validName(name))throw Error('Choose a valid category name.');
+  if(old!==name&&Object.prototype.hasOwnProperty.call(this.data.categories,name))throw Error('Category already exists.');
+  this.transaction(()=>{const cats={};Object.keys(this.data.categories).forEach(c=>{cats[c===old?name:c]=this.data.categories[c];});this.data.categories=cats;delete this.data.icons[old];this.data.icons[name]=icon||'';});
+ },
+ deleteCategory(c){if(c==='Essentials')throw Error('Essentials is a built-in view.');this.transaction(()=>{delete this.data.categories[c];delete this.data.icons[c];});},
+ reorderExpression(c,from,to){
+  const list=this.getItems(c);
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=list.length||to>=list.length)return;
+  this.transaction(()=>{list.splice(to,0,list.splice(from,1)[0]);if(c==='Essentials')this.data.essentialOrder=list.map(i=>i.id);});
+ },
+ reorderCategories(from,to){
+  const cats=this.getCategories();
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=cats.length||to>=cats.length)return;
+  this.transaction(()=>{cats.splice(to,0,cats.splice(from,1)[0]);const d={};cats.forEach(c=>{d[c]=this.data.categories[c];});this.data.categories=d;});
+ }
 };
