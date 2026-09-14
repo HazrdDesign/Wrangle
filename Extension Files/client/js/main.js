@@ -76,7 +76,6 @@ function applyItem(item,event) {
         if(!res.ok)message=(res.errors||[])[0]||'Expression could not be applied.';
         else if(mode==='controllers')message=res.controllers?'Added '+res.controllers+' controller'+(res.controllers===1?'':'s')+'.':'Controllers already exist; their values were kept.';
         else message='Applied to '+res.applied+' propert'+(res.applied===1?'y':'ies')+(res.skipped?' · '+res.skipped+' skipped':'')+'.';
-        if(res.ok&&item.hint&&mode!=='controllers')message+=' '+item.hint+'.';
         setStatus(message,!res.ok,details);
     });
 }
@@ -130,9 +129,6 @@ function renderContent() {
         const label=(targetTypes[item.target]||targetTypes.any).label;
         const count=(item.controllers||[]).length;
         apply.appendChild(make('span','expr-target',label+(count?' · '+count+' control'+(count===1?'':'s'):'')));
-        if(item.requiresKeys)apply.appendChild(make('span','requirement','Requires '+item.requiresKeys+'+ keyframes'));
-        if(item.hint)apply.appendChild(make('span','requirement',item.hint));
-        if(item.description)apply.title=item.description;
         apply.setAttribute('aria-label','Apply '+item.name+' to '+label);
         apply.addEventListener('click',e=>applyItem(item,e));row.appendChild(apply);
         const actions=make('div','row-actions');

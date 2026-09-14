@@ -36,19 +36,19 @@ test('Migration preserves custom categories, modified entries and deletions',()=
 });
 test('Migration retires stock entries and backs up original',()=>{
  const m=library({version:11,categories:c.legacy,icons:{}});m.manager.load();
- assert.equal(Object.values(m.manager.data.categories).flat().length,40);assert(m.store.wrangle_library_pre_v15);
+ assert.equal(Object.values(m.manager.data.categories).flat().length,40);assert(m.store.wrangle_library_pre_v16);
 });
 test('Newer backup wins over stale disk file',()=>{
- const m=library({version:15,revision:20,categories:{Custom:[{id:1,name:'new',code:'value'}]},icons:{}});
- m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:15,revision:10,categories:{Custom:[]},icons:{}})};
+ const m=library({version:16,revision:20,categories:{Custom:[{id:1,name:'new',code:'value'}]},icons:{}});
+ m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:16,revision:10,categories:{Custom:[]},icons:{}})};
  m.manager.filePath='mock';m.manager.load();assert.equal(m.manager.getItems('Custom').length,1);
 });
 test('Invalid data is never reset',()=>{
  const m=library();m.store.wrangle_library='{';assert.throws(()=>m.manager.load());assert.equal(m.store.wrangle_library,'{');
 });
 test('Future-version file is never replaced by an older backup',()=>{
- const m=library({version:15,revision:1,categories:{Custom:[]},icons:{}});
- m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:16,categories:{Custom:[]}})};
+ const m=library({version:16,revision:1,categories:{Custom:[]},icons:{}});
+ m.manager.fs={existsSync:()=>true,readFileSync:()=>JSON.stringify({version:17,categories:{Custom:[]}})};
  m.manager.filePath='mock';assert.throws(()=>m.manager.load(),/newer Wrangle/);
 });
 test('Failed writes roll back the in-memory edit',()=>{
@@ -156,7 +156,7 @@ test('Upgrade from v1.3 removes stock, preserves moved edits and deletions, adds
  const all=Object.values(m.manager.data.categories).flat();
  assert(!all.some(i=>i.id===101||i.id===204||i.id===104));assert.equal(m.manager.data.categories.Client[0].code,modified.code);
  assert.equal(all.filter(i=>i.id===107).length,1);assert.equal(all.find(i=>i.id===201).controllers.length,2);
- assert(m.store.wrangle_library_pre_v15);m.manager.load();assert.equal(Object.values(m.manager.data.categories).flat().filter(i=>i.id===107).length,1);
+ assert(m.store.wrangle_library_pre_v16);m.manager.load();assert.equal(Object.values(m.manager.data.categories).flat().filter(i=>i.id===107).length,1);
 });
 test('Every preset declares its property and has useful complete controllers',()=>{
  items.forEach(i=>{assert(i.code.startsWith('// Apply to '));assert(i.controllers.length>0);});
@@ -223,7 +223,7 @@ test('Auto fade respects in/out points, zero durations, animated base and overla
 
 test('Retired research batch and Bounce are absent; document additions have purpose and source',()=>{
  [409,410,411,412,413,211,212,213].forEach(id=>assert(!byId(id)));
- [420,421,422,220,221,222,423,424,425,426,801,802,803,320,321,322,302,402,403].forEach(id=>{assert(byId(id).code.includes('// Purpose:'));assert(byId(id).code.includes('Wrangle_One_Click_Expression_Presets.md'));assert(!byId(id).code.includes('Wrangle by'));});
+ [420,421,422,220,221,222,423,424,425,426,801,802,803,320,321,322,302,402,403].forEach(id=>{assert(byId(id).code.includes('// Purpose:'));assert(byId(id).code.includes('// Expressions by '));assert(!byId(id).code.includes('Wrangle by'));});
 });
 test('Typewriter dropdown uses legal labels; invalid saved dropdown fails before controls',()=>{
  assert.deepEqual(Array.from(byId(107).controllers.find(i=>i.label==='Cursor Style').options),['Vertical Bar','Underscore']);
@@ -291,8 +291,38 @@ test('Posterize plus Wiggle controllers are actually consumed; flicker is bounde
  let fps,wig;evaluate(301,{'Frame Rate':15,Frequency:3,Amplitude:7},{posterizeTime:n=>{fps=n;},wiggle:(f,a)=>{wig=[f,a];return 0;}});assert.equal(fps,15);assert.deepEqual(wig,[3,7]);
  let seed;const result=evaluate(302,{Speed:0,Min:200,Max:-10},{index:2,seedRandom:n=>{seed=n;},random:(lo,hi)=>hi});assert.equal(result,100);assert.equal(seed,2);
 });
-test('Loop In dispatches before-key functions and explains its time region',()=>{
- [207,209].forEach(id=>{assert(byId(id).hint.includes('BEFORE'));assert(byId(id).description.includes('in-point'));});
+test('Loop timing comments remain editable without extra library descriptions',()=>{
+ items.forEach(i=>{assert.equal(i.hint,undefined);assert.equal(i.description,undefined);});
+ [207,209].forEach(id=>assert(byId(id).code.includes('// Loops BEFORE')));
+});
+
+
+test('All 40 preset credits are corrected without changing executable expressions',()=>{
+ const old=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/library-1.6.0.json'),'utf8'));
+ const body=code=>code.split(/\r?\n/).filter(line=>!/^\s*\/\//.test(line)).join('\n').trim();
+ Object.values(old).flat().forEach(i=>assert.equal(body(i.code),body(byId(i.id).code)));
+ const nsc=[407,220,301,305,306,307,408,421,602];
+ items.forEach(i=>{
+  assert(!i.code.includes('author not specified'));assert(!i.code.includes('Wrangle_One_Click_Expression_Presets.md'));
+  const expected=i.id===304?'Dan Ebberts/Motionscript':nsc.includes(i.id)?'Desmond Du/NoSleepCreative':'Jose "Hazrd" Lopez';
+  assert(i.code.includes('// Expressions by '+expected));
+ });
+});
+test('1.6 saved libraries receive credits without reset, control changes, or resurrection',()=>{
+ const old=JSON.parse(JSON.stringify(JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/library-1.6.0.json'),'utf8'))));
+ const anchor=old.Essentials[0];anchor.id=5;anchor.name='My centered anchor';anchor.controllers[0].value=[20,30];
+ old.Custom=[{id:900,name:'Personal',code:'value + 42;\n// Source: Wrangle_One_Click_Expression_Presets.md (author not specified).',controllers:[]}];
+ old.Wiggle=old.Wiggle.filter(i=>i.id!==307);
+ const saved={version:15,revision:100,categories:old,icons:{Custom:'C'},essentialOrder:[5,201]};
+ const m=library(saved);m.manager.load();
+ const all=Object.values(m.manager.data.categories).flat();
+ assert.equal(m.manager.data.version,16);assert.equal(all.length,Object.values(old).flat().length);
+ assert(!all.some(i=>i.id===307));assert.equal(m.manager.data.icons.Custom,'C');
+ const fixed=all.find(i=>i.id===5);assert.equal(fixed.name,anchor.name);assert.deepEqual(JSON.parse(JSON.stringify(fixed.controllers)),anchor.controllers);
+ assert(fixed.code.includes('Desmond Du/NoSleepCreative'));
+ assert.equal(all.find(i=>i.id===900).code,'value + 42;\n// Expressions by Jose "Hazrd" Lopez');
+ assert.deepEqual(JSON.parse(m.store.wrangle_library_pre_v16),saved);
+ const once=JSON.stringify(m.manager.data);m.manager.load();assert.equal(JSON.stringify(m.manager.data),once);
 });
 
 console.log('\n'+passed+'/'+results.length+' checks passed. AE objects are mocked; live AE acceptance remains required.');

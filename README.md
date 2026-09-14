@@ -2,13 +2,15 @@
 
 One-click expressions with their controls. Select timeline properties, then click a library row.
 
-## 1.6.0 update
+## 1.6.1 update
 
-Fixes Typewriter's illegal dropdown labels, consolidates Auto Center Anchor Point in Essentials with controls, upgrades Posterize + Wiggle with controls, restores Color, and removes Inertial Bounce. Adds the 17 approved non-bounce patterns from the supplied one-click document, with property targets, purpose comments and controls. Essentials references presets without duplicating them.
+Library rows show the preset name, Apply To property, and controller count. Extra keyframe/timing lines, description tooltips, and appended timing messages are removed.
 
-The default catalog contains 40 unique presets. Existing libraries preserve user edits and deletions. Loop In variants run before the first keyframe; the panel now makes that timing explicit.
+The existing 40 expressions were compared with NoSleepCreative's page. Matching methods credit Desmond Du/NoSleepCreative or the original source linked there (Dan Ebberts for Wiggle Loop). The remaining presets credit Jose "Hazrd" Lopez. The placeholder Markdown-filename attribution is removed. Expression behavior and controllers are unchanged.
 
-[Full update notes](docs/UPDATE-1.6.md). Download Wrangle-v1.6.0.zxp from GitHub Releases. 47 automated checks and browser checks passed. After Effects testing is left to the user.
+Saved libraries receive corrected credits automatically, with a backup, while preserving user edits, controller values, organization, and deletions. No reset is needed.
+
+[Update notes and credit comparison](docs/UPDATE-1.6.1.md). 49 automated checks passed; browser preview confirms compact rows. After Effects testing is left to the user.
 ## Use
 
 - **Click:** expression and controllers, on compatible selected properties.
@@ -27,7 +29,7 @@ A controller already present with the same name and type is reused without reset
 Windows: `%APPDATA%/Hazrd/Wrangle/data.json`
 macOS: `~/Library/Application Support/Hazrd/Wrangle/data.json`
 
-Before upgrading an older library, Wrangle creates a timestamped pre-v15 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the requested stock IDs while adding newly introduced presets. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
+Before upgrading an older library, Wrangle creates a timestamped pre-v16 backup beside data.json (or a browser backup in preview mode). It replaces only recognized, unchanged stock presets, preserves custom entries/category order/deletions, and retires the requested stock IDs while adding newly introduced presets. Edited/custom copies are preserved. Changes do not alter expressions already applied to AE projects.
 
 Writes use a temporary file and rename. A revision number chooses the newest valid file/browser copy after a failed save. Errors appear in the panel. Recovering edits already lost by an earlier v11 migration requires an existing backup.
 

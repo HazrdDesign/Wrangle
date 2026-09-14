@@ -1,11 +1,11 @@
-// Data version 15 migrates stock presets without resetting user libraries.
+// Data version 16 migrates stock presets without resetting user libraries.
 const LibraryManager = {
  data:null, fs:null, filePath:null, warning:'',
  clone(x){return JSON.parse(JSON.stringify(x));},
  validName(s){return typeof s==='string' && s.trim() && !['__proto__','constructor','prototype'].includes(s);},
  validate(d){
   if(!d || !d.categories || typeof d.categories!=='object' || Array.isArray(d.categories)) throw Error('Invalid library.');
-  if(Number(d.version)>15) throw Error('Library requires a newer Wrangle version.');
+  if(Number(d.version)>16) throw Error('Library requires a newer Wrangle version.');
   Object.keys(d.categories).forEach(c=>{
    if(!this.validName(c)||!Array.isArray(d.categories[c])) throw Error('Invalid category.');
    d.categories[c].forEach(i=>{if(!i||i.id==null||typeof i.name!=='string'||typeof i.code!=='string'||(i.controllers&&!Array.isArray(i.controllers))) throw Error('Invalid expression.');});
@@ -24,24 +24,25 @@ const LibraryManager = {
  },
  load(){
   const candidates=[];let invalid=false,futureVersion=false;
-  const read=text=>{if(!text)return;try{const parsed=JSON.parse(text);if(Number(parsed.version)>15){futureVersion=true;return;}candidates.push(this.validate(parsed));}catch(e){invalid=true;}};
+  const read=text=>{if(!text)return;try{const parsed=JSON.parse(text);if(Number(parsed.version)>16){futureVersion=true;return;}candidates.push(this.validate(parsed));}catch(e){invalid=true;}};
   if(this.fs&&this.filePath&&this.fs.existsSync(this.filePath)){try{read(this.fs.readFileSync(this.filePath,'utf8'));}catch(e){invalid=true;}}
   try{read(localStorage.getItem('wrangle_library'));}catch(e){this.warning='Browser backup unavailable.';}
   if(futureVersion)throw Error('Saved data requires a newer Wrangle version. Nothing was overwritten.');
   if(!candidates.length){
    if(invalid)throw Error('Cannot read saved library. Original data was left untouched; restore a backup.');
-   this.data={version:15,revision:0,categories:this.clone(defaultLibrary),icons:{}};this.save();return;
+   this.data={version:16,revision:0,categories:this.clone(defaultLibrary),icons:{}};this.save();return;
   }
   candidates.sort((a,b)=>(Number(b.revision)||0)-(Number(a.revision)||0));this.data=this.clone(candidates[0]);
   if(invalid)this.warning='Recovered a valid library copy. Check your saved backups.';
-  if(Number(this.data.version||0)<15){
+  if(Number(this.data.version||0)<16){
    const backup=JSON.stringify(this.data,null,2);
-   if(this.fs&&this.filePath)this.fs.writeFileSync(this.filePath+'.pre-v15-'+Date.now()+'.bak',backup,'utf8');
-   else localStorage.setItem('wrangle_library_pre_v15',backup);
+   if(this.fs&&this.filePath)this.fs.writeFileSync(this.filePath+'.pre-v16-'+Date.now()+'.bak',backup,'utf8');
+   else localStorage.setItem('wrangle_library_pre_v16',backup);
    this.data=this.migrate(this.data);this.save();
   } this.data.icons=this.data.icons||{};
  },
  migrate(input){
+  if(Number(input.version)>=15)return this.correctCredits(this.clone(input));
   const d=this.clone(input),originals={},current={},homes={},available={},aliases={};
   const histories=[legacyLibrary,libraryV12,libraryV13,libraryV14];
   histories.forEach(catalog=>Object.keys(catalog).forEach(c=>catalog[c].forEach(x=>{(originals[x.id]||(originals[x.id]=[])).push(x);} )));
@@ -79,7 +80,23 @@ const LibraryManager = {
    });
   });
   d.categories=Object.assign({Essentials:d.categories.Essentials||[]},d.categories);
-  d.version=15;d.icons=d.icons||{};return d;
+  d.version=16;d.icons=d.icons||{};return this.correctCredits(d);
+ },
+ correctCredits(d){
+  // Match executable code, so renamed/moved stock and controller-value edits also receive credits.
+  // Strip whole comment lines only; never remove text inside expression strings.
+  const body=code=>code.split(/\r?\n/).filter(line=>!/^\s*\/\//.test(line)).join('\n').trim();
+  const current=Object.keys(defaultLibrary).reduce((all,cat)=>all.concat(defaultLibrary[cat]),[]);
+  Object.keys(d.categories).forEach(cat=>d.categories[cat].forEach(item=>{
+   const match=current.find(stock=>body(stock.code)===body(item.code));
+   const oldPlaceholder=/^\/\/ Source: Wrangle_One_Click_Expression_Presets\.md \(author not specified\)\.\r?$/gm;
+   if(match){
+    const footer=match.code.slice(match.code.lastIndexOf('\n// Expressions by '));
+    item.code=item.code.replace(/^\/\/ (?:Wrangle by |Expressions by |Source: ).*\r?\n?/gm,'').trimEnd()+footer;
+   }else item.code=item.code.replace(oldPlaceholder,'// Expressions by Jose "Hazrd" Lopez');
+   delete item.hint;delete item.description;
+  }));
+  d.version=16;return d;
  },
  save(){
   this.data.revision=Math.max(Date.now(),Number(this.data.revision||0)+1);
